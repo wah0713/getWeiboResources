@@ -1,0 +1,29 @@
+{
+  "name": "myTampermonkey",
+  "version": "1.0.0",
+  "description": "斗鱼插件",
+  "private": true,
+  "scripts": {
+    "bundle": "webpack"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/wah0713/myTampermonkey.git"
+  },
+  "keywords": [],
+  "author": "wah0713",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/wah0713/myTampermonkey/issues"
+  },
+  "homepage": "https://github.com/wah0713/myTampermonkey#readme",
+  "devDependencies": {
+    "clean-webpack-plugin": "^3.0.0",
+    "css-loader": "^2.1.1",
+    "extract-text-webpack-plugin": "^4.0.0-beta.0",
+    "optimize-css-assets-webpack-plugin": "^5.0.1",
+    "style-loader": "^0.23.1",
+    "webpack": "^4.33.0",
+    "webpack-cli": "^3.3.2"
+  }
+}
