@@ -9,7 +9,7 @@
 // @license      MIT
 // @icon         https://weibo.com/favicon.ico
 // @require      https://cdn.bootcss.com/jquery/1.12.4/jquery.min.js
-// @require      https://cdn.bootcdn.net/ajax/libs/jszip/3.10.1/jszip.min.js
+// @require      https://cdn.bootcss.com/jszip/3.1.5/jszip.min.js
 // @match        *://weibo.com/*
 // @noframes     true
 // @run-at       document-idle
