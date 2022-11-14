@@ -34,7 +34,7 @@
         var zip = new JSZip();
         imageRes.forEach(function (obj) {
             const suffixName = new URL(obj.finalUrl).pathname.match(/\.\w+$/)[0]
-            const name = `${obj._id}${suffixName}`
+            const name = `${writerName}${time}-${obj._id}${suffixName}`
             zip.file(name, obj._blob);
         });
 

@@ -4,7 +4,7 @@
 
  1、不支持下载视频 <br>
 
-![当前版本2.03](https://wah0713.github.io/getWeiboImage/image/1.00.png)
+![当前版本1.00](https://wah0713.github.io/getWeiboImage/image/1.00.png)
 <!--
 ### 上个版本2.02效果图：
 
