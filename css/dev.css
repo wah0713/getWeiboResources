@@ -1,7 +1,5 @@
-.toolbar_retweetIcon_3_EwF {
-  pointer-events: none;
-}
-.toolbar_retweetIcon_3_EwF:hover.toolbar_retweetIcon_3_EwF::before {
+.woo-box-flex .head-info_info_2AspQ::after {
   content: '下载';
   pointer-events: auto;
+  color: orange;
 }
