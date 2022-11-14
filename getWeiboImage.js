@@ -16,47 +16,57 @@
 // @grant        GM_addStyle
 // @grant        GM_xmlhttpRequest
 // @grant        GM_download
+// @grant        unsafeWindow
 // ==/UserScript==
 
-(function () {
+(async function () {
     let vueRecycleScrollerDom = $('.Main_full_1dfQX')
     vueRecycleScrollerDom.on('click', '.head-info_info_2AspQ', async function () {
         const imgUrlList = []
-        const $imgDomList = $(this).parents('.Feed_body_3R0rO').find('.picture.content_row_-r5Tk img')
+        const $imgDomList = $(this).parents('.Feed_body_3R0rO').find('.picture.content_row_-r5Tk .woo-picture-slot')
         const writerName = $(this).prev().find('.head_name_24eEB').text()
-        const time = $(this).find('.head-info_time_6sFQg').text()
+        const time = $(this).find('.head-info_time_6sFQg').attr('title')
         $imgDomList.each((index, item) => {
-            const url = item.src.replace(/(?<=(cn)\/).+(?=(\/))/, 'large')
+            let fileDom = null
+            if ($(item).find('img,video').length) {
+                fileDom = $(item).find('img,video')[0]
+            } else {
+                fileDom = $(item).prevAll('img,video')[0]
+            }
+            let url = fileDom.src
+            if (fileDom.nodeName === 'IMG') {
+                url = fileDom.src.replace(/(?<=(cn)\/).+(?=(\/))/, 'large')
+            }
             imgUrlList.push({
                 url,
                 id: index + 1
             })
         })
         console.log(`imgUrlList`, imgUrlList)
-        const promiseList = imgUrlList.map(item => getImageblob(item))
+        const promiseList = imgUrlList.map(item => getFileBlob(item))
         const imageRes = await Promise.all(promiseList)
-        console.log(`imageRes`, imageRes)
+
+        // 打包
         var zip = new JSZip();
         imageRes.forEach(function (obj) {
-            const name = `${obj._id}${obj.finalUrl.match(/\.\w+$/)[0]}`
+            const suffixName = new URL(obj.finalUrl).pathname.match(/\.\w+$/)[0]
+            const name = `${obj._id}${suffixName}`
             console.log(`name`, name)
             zip.file(name, obj._blob);
         });
-        console.log(`zip`, zip)
+
         // 生成zip文件并下载
         zip.generateAsync({
             type: 'blob'
         }).then((content) => {
-            console.log(`content`, content)
             GM_download({
                 url: URL.createObjectURL(content),
                 name: `${writerName}${time}.zip`,
             })
         })
-        console.log(1)
     })
 
-    function getImageblob(data) {
+    function getFileBlob(data) {
         return new Promise((resolve, rejcet) => {
             GM_xmlhttpRequest({
                 url: data.url,
@@ -85,6 +95,6 @@
     GM_addStyle(``)
 
     // // debugJS
-    // setTimeout(() => {
-    // }, 5 * 1000);
+    // unsafeWindow.$ = $
+    // setTimeout(() => {}, 5 * 1000);
 })()
