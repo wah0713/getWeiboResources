@@ -21,15 +21,26 @@
 
 (async function () {
     let vueRecycleScrollerDom = $('.Main_full_1dfQX')
-    vueRecycleScrollerDom.on('click', '.woo-box-flex .head-info_info_2AspQ', async function () {
+    vueRecycleScrollerDom.on('click', '.woo-box-flex .head-info_info_2AspQ', async function (event) {
+        const status = gettextDom(this)
+
+        if (status === '中') return false
+
+        retextDom(this, '中')
         // const imgUrlList = getfileUrlByDom(this)
         const writerName = $(this).prev().find('.head_name_24eEB').text()
         const time = $(this).find('.head-info_time_6sFQg').attr('title') || $(this).find('.head-info_time_6sFQg').text()
+        const href = $(this).find('.head-info_time_6sFQg').attr('href')
         const imgUrlList = await getfileUrlByInfo(this)
+
+        if (imgUrlList.length <= 0) {
+            retextDom(this, '失败，未找到图片资源', true)
+            return false
+        }
 
         const promiseList = imgUrlList.map(getFileBlob)
         const imageRes = await Promise.all(promiseList)
-
+        retextDom(this, '结束（点击再次下载）', true)
         // 打包
         var zip = new JSZip();
         imageRes.forEach(function (obj) {
@@ -128,11 +139,22 @@
         return urlList
     }
 
-    GM_addStyle(`.woo-box-flex .head-info_info_2AspQ::after {
-        content: '下载';
-        color: orange;
-        cursor: pointer;
-      }
+    function retextDom(dom, text, isReset) {
+        const $dom = $(dom)
+        $dom.attr('show-text', text)
+        if (isReset) {
+            setTimeout(() => {
+                $dom.attr('show-text', '')
+            }, 2000)
+        }
+    }
+
+    function gettextDom(dom, text) {
+        return $(dom).attr('show-text')
+    }
+
+    GM_addStyle(`
+    .woo-box-flex .head-info_info_2AspQ:after{content:"下载" attr(show-text);color:#ff8200;cursor:pointer}
       `)
 
     // debugJS
