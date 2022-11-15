@@ -1,14 +1,14 @@
 # [微博一键取图（9宫格）](https://greasyfork.org/zh-CN/scripts/454816-%E5%BE%AE%E5%8D%9A%E4%B8%80%E9%94%AE%E5%8F%96%E5%9B%BE-9%E5%AE%AB%E6%A0%BC)
 
-### 当前版本1.00效果图：
+### 当前版本1.01效果图：
 
 1、下载图片 <br>
 2、不支持下载视频 <br>
 3、不支持下载视频 <br>
 
-![当前版本1.00](https://wah0713.github.io/getWeiboImage/image/1.00-part1.png)
+![当前版本1.01](https://wah0713.github.io/getWeiboImage/image/1.01-part1.png)
 
-![当前版本1.00](https://wah0713.github.io/getWeiboImage/image/1.00-part2.png)
+![当前版本1.01](https://wah0713.github.io/getWeiboImage/image/1.01-part2.png)
 
 <!--
 

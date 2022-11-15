@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         微博一键取图（9宫格）
 // @namespace    https://github.com/wah0713/getWeiboImage
-// @version      1.00
+// @version      1.01
 // @description  一个兴趣使然的脚本。
 // @supportURL   https://github.com/wah0713/getWeiboImage/issues
 // @author       wah0713
