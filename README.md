@@ -1,11 +1,17 @@
-# [微博一键取图（9宫格）)](https://greasyfork.org/zh-CN/scripts/381934-%E6%97%97%E9%B1%BC%E5%8E%BB%E7%81%AB%E7%AE%AD%E6%A8%AA%E5%B9%85)
+# [微博一键取图（9宫格）](https://greasyfork.org/zh-CN/scripts/454816-%E5%BE%AE%E5%8D%9A%E4%B8%80%E9%94%AE%E5%8F%96%E5%9B%BE-9%E5%AE%AB%E6%A0%BC)
 
 ### 当前版本1.00效果图：
 
- 1、不支持下载视频 <br>
+1、下载图片 <br>
+2、不支持下载视频 <br>
+3、不支持下载视频 <br>
 
-![当前版本1.00](https://wah0713.github.io/getWeiboImage/image/1.00.png)
+![当前版本1.00](https://wah0713.github.io/getWeiboImage/image/1.00-part1.png)
+
+![当前版本1.00](https://wah0713.github.io/getWeiboImage/image/1.00-part2.png)
+
 <!--
+
 ### 上个版本2.02效果图：
 
  1、[显示房间数据]上线。实话实说我本来是抗拒的，因为这个功能需要获取用户更多权限。数据来源 doseeing.com(感谢) 由 BerryBarry11 提出 <br>
@@ -14,7 +20,9 @@
 
  3、多弹幕情况下会卡顿（现在有所好转，但还在持续观察） 由 Jesse1uo 提出 <br>
 
-![上个版本2.02](https://wah0713.github.io/myTampermonkey/image/douyu2.02.png) -->
+![上个版本2.02](https://wah0713.github.io/myTampermonkey/image/douyu2.02.png)
+
+ -->
 
 ### bug和建议：
 
