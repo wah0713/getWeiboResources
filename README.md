@@ -3,7 +3,7 @@
 ### 当前版本1.01效果图：
 
 1、下载图片 <br>
-2、不支持下载视频 <br>
+2、支持最多18图下载 <br>
 3、不支持下载视频 <br>
 
 ![当前版本1.01](https://wah0713.github.io/getWeiboImage/image/1.01-part1.png)

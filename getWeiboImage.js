@@ -98,7 +98,7 @@
     function getInfoById(id) {
         return new Promise((resolve, rejcet) => {
             GM_xmlhttpRequest({
-                url: `https://${document.location.host}/ajax/statuses/show?id=${id}`,
+                url: `https://weibo.com/ajax/statuses/show?id=${id}`,
                 responseType: 'json',
                 onload: (res) => {
                     console.log(`onload`, res)
