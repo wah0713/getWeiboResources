@@ -11,6 +11,7 @@
 // @require      https://cdn.bootcss.com/jquery/1.12.4/jquery.min.js
 // @require      https://cdn.bootcss.com/jszip/3.1.5/jszip.min.js
 // @match        *://weibo.com/*
+// @connect      sinaimg.cn
 // @noframes     true
 // @run-at       document-idle
 // @grant        GM_addStyle
