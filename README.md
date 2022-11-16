@@ -1,4 +1,4 @@
-# [微博一键取图（9宫格）](https://greasyfork.org/zh-CN/scripts/454816-%E5%BE%AE%E5%8D%9A%E4%B8%80%E9%94%AE%E5%8F%96%E5%9B%BE-9%E5%AE%AB%E6%A0%BC)
+# [微博一键取图（9宫格）](https://greasyfork.org/zh-CN/scripts/454816)
 
 ### 当前版本1.01效果图：
 
