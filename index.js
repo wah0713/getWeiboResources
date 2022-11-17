@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         微博一键取图（9宫格）
 // @namespace    https://github.com/wah0713/getWeiboImage
-// @version      1.01
+// @version      1.02
 // @description  一个兴趣使然的脚本，微博（weibo|wb）一键取图脚本。
 // @supportURL   https://github.com/wah0713/getWeiboImage/issues
 // @author       wah0713
@@ -12,6 +12,7 @@
 // @require      https://cdn.bootcss.com/jszip/3.1.5/jszip.min.js
 // @match        *://weibo.com/*
 // @connect      sinaimg.cn
+// @connect      weibo.com
 // @noframes     true
 // @run-at       document-idle
 // @grant        GM_addStyle
@@ -21,32 +22,38 @@
 // ==/UserScript==
 
 (async function () {
-    let vueRecycleScrollerDom = $('.Main_full_1dfQX')
-    vueRecycleScrollerDom.on('click', '.woo-box-flex .head-info_info_2AspQ', async function (event) {
-        const status = gettextDom(this)
+    // 定时器集合
+    const timerObject = {}
 
-        if (status === '中') return false
+    $('.Main_full_1dfQX').on('click', '.woo-box-flex .head-info_info_2AspQ', async function () {
+        if (gettextDom(this) === '中') return false
+
+        const href = $(this).find('.head-info_time_6sFQg').attr('href')
 
         retextDom(this, '中')
         // const imgUrlList = getfileUrlByDom(this)
-        const writerName = $(this).prev().find('.head_name_24eEB').text()
-        const time = $(this).find('.head-info_time_6sFQg').attr('title') || $(this).find('.head-info_time_6sFQg').text()
-        const href = $(this).find('.head-info_time_6sFQg').attr('href')
         const imgUrlList = await getfileUrlByInfo(this)
-
         if (imgUrlList.length <= 0) {
-            retextDom(this, '失败，未找到图片资源', true)
+            retextDom(this, '失败，未找到图片资源', href)
             return false
         }
 
         const promiseList = imgUrlList.map(getFileBlob)
         const imageRes = await Promise.all(promiseList)
-        retextDom(this, '结束（点击再次下载）', true)
-        // 打包
+        retextDom(this, '结束（点击再次下载）', href)
+
+        const writerName = $(this).prev().find('.head_name_24eEB').text()
+        const time = $(this).find('.head-info_time_6sFQg').attr('title') || $(this).find('.head-info_time_6sFQg').text()
+        pack(imageRes, `${writerName}${time}`, )
+
+    })
+
+    // 打包
+    function pack(imageRes, modification) {
         var zip = new JSZip();
         imageRes.forEach(function (obj) {
             const suffixName = new URL(obj.finalUrl).pathname.match(/\.\w+$/)[0]
-            const name = `${writerName}${time}-part${String(obj._id).padStart(2,'0')}${suffixName}`
+            const name = `${modification}-part${String(obj._id).padStart(2,'0')}${suffixName}`
             zip.file(name, obj._blob);
         });
 
@@ -56,11 +63,12 @@
         }).then((content) => {
             GM_download({
                 url: URL.createObjectURL(content),
-                name: `${writerName}${time}.zip`,
+                name: `${modification}.zip`,
             })
         })
-    })
+    }
 
+    // 下载
     function getFileBlob(url, index) {
         return new Promise((resolve, rejcet) => {
             GM_xmlhttpRequest({
@@ -72,7 +80,7 @@
                     'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/106.0.0.0 Safari/537.36'
                 },
                 onload: (res) => {
-                    console.log(`onload`, res)
+                    console.log(`getFileBlob-onload`, res)
                     resolve({
                         ...res,
                         _blob: res.response,
@@ -80,13 +88,14 @@
                     })
                 },
                 onerror: (res) => {
-                    console.log(`onerror`, res)
+                    console.log(`getFileBlob-onerror`, res)
                     resolve(null)
                 }
             })
         })
     }
 
+    // 通过dom获取链接
     function getfileUrlByDom(dom) {
         const UrlList = []
         const $imgDomList = $(dom).parents('.Feed_body_3R0rO').find('.picture.content_row_-r5Tk .woo-picture-slot')
@@ -107,23 +116,25 @@
         return UrlList
     }
 
+    // 通过id获取链接
     function getInfoById(id) {
         return new Promise((resolve, rejcet) => {
             GM_xmlhttpRequest({
                 url: `https://weibo.com/ajax/statuses/show?id=${id}`,
                 responseType: 'json',
                 onload: (res) => {
-                    console.log(`onload`, res)
+                    console.log(`getInfoById-onload`, res)
                     resolve(res.response.pic_infos)
                 },
                 onerror: (res) => {
-                    console.log(`onerror`, res)
+                    console.log(`getInfoById-onerror`, res)
                     resolve(null)
                 }
             })
         })
     }
 
+    // 获取图片链接
     async function getfileUrlByInfo(dom) {
         const idList = []
         $(dom).parents('.Feed_body_3R0rO').find('.head-info_time_6sFQg').each((index, item) => {
@@ -135,21 +146,27 @@
             if (!item) return false;
             [...Object.keys(item)].forEach(ele => {
                 urlList.push(item[ele].largest.url)
+                if (item[ele].type === 'livephoto') {
+                    urlList.push(item[ele].video)
+                }
             })
         })
         return urlList
     }
 
-    function retextDom(dom, text, isReset) {
+    // dom修改文本
+    function retextDom(dom, text, timer) {
         const $dom = $(dom)
         $dom.attr('show-text', text)
-        if (isReset) {
-            setTimeout(() => {
-                $dom.attr('show-text', '')
+        if (timer) {
+            timerObject[timer] && clearTimeout(timerObject[timer])
+            timerObject[timer] = setTimeout(() => {
+                $(`[href='${timer}']`).parent().attr('show-text', '')
             }, 2000)
         }
     }
 
+    // 获取dom文本
     function gettextDom(dom, text) {
         return $(dom).attr('show-text')
     }
@@ -159,7 +176,7 @@
       `)
 
     // debugJS
-    // unsafeWindow.$ = $
+    unsafeWindow.$ = $
     // setTimeout(() => {
     // }, 5 * 1000);
 })()
