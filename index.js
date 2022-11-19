@@ -23,6 +23,8 @@
 // ==/UserScript==
 
 (async function () {
+    // 是否开启dubug模式
+    let isDebug = false
     // 定时器集合
     const timerObject = {}
     // 消息
@@ -51,7 +53,7 @@
         }
     })
 
-    $('.Main_full_1dfQX').on('click', '.woo-box-flex .head-info_info_2AspQ', async function () {
+    $('.Main_full_1dfQX').on('click', '.woo-box-flex .head-info_info_2AspQ:not(.Feed_retweetHeadInfo_Tl4Ld)', async function () {
         if (![message.noImageError, message.finish, undefined, ''].includes(gettextDom(this))) return false
         const href = $(this).find('.head-info_time_6sFQg').attr('href')
 
@@ -106,8 +108,15 @@
                 GM_download({
                     url: URL.createObjectURL(content),
                     name: `${modification}.zip`,
+                    onload: (res) => {
+                        isDebug && console.log(`pack-onload`, res)
+                        resolve(res)
+                    },
+                    onerror: (res) => {
+                        isDebug && console.log(`pack-onerror`, res)
+                        resolve(res)
+                    }
                 })
-                resolve(content)
             })
         })
     }
@@ -124,7 +133,7 @@
                     'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/106.0.0.0 Safari/537.36'
                 },
                 onload: (res) => {
-                    console.log(`getFileBlob-onload`, res)
+                    isDebug && console.log(`getFileBlob-onload`, res)
                     callback()
                     resolve({
                         ...res,
@@ -133,7 +142,7 @@
                     })
                 },
                 onerror: (res) => {
-                    console.log(`getFileBlob-onerror`, res)
+                    isDebug && console.log(`getFileBlob-onerror`, res)
                     resolve(null)
                 }
             })
@@ -168,11 +177,11 @@
                 url: `https://weibo.com/ajax/statuses/show?id=${id}`,
                 responseType: 'json',
                 onload: (res) => {
-                    console.log(`getInfoById-onload`, res)
+                    isDebug && console.log(`getInfoById-onload`, res)
                     resolve(res.response.pic_infos)
                 },
                 onerror: (res) => {
-                    console.log(`getInfoById-onerror`, res)
+                    isDebug && console.log(`getInfoById-onerror`, res)
                     resolve(null)
                 }
             })
@@ -217,11 +226,11 @@
     }
 
     GM_addStyle(`
-    .woo-box-flex .head-info_info_2AspQ:after{content:"下载" attr(show-text);color:#ff8200;cursor:pointer}.woo-box-flex.Frame_content_3XrxZ:before{content:attr(show-text);color:red;position:fixed;left:0;width:4em}
+    .woo-box-flex .head-info_info_2AspQ:not(.Feed_retweetHeadInfo_Tl4Ld):after{content:"下载" attr(show-text);color:#ff8200;cursor:pointer}.woo-box-flex.Frame_content_3XrxZ:before{content:attr(show-text);color:#d52c2b;position:fixed;left:0;width:4em}
     `)
 
-    // debugJS
+    // // debugJS
+    // isDebug = true
     // unsafeWindow.$ = $
-    // setTimeout(() => {
-    // }, 5 * 1000);
+    // setTimeout(() => {}, 5 * 1000);
 })()

@@ -1,11 +1,11 @@
-.woo-box-flex .head-info_info_2AspQ::after {
+.woo-box-flex .head-info_info_2AspQ:not(.Feed_retweetHeadInfo_Tl4Ld)::after {
   content: '下载' attr(show-text);
   color: #ff8200;
   cursor: pointer;
 }
 .woo-box-flex.Frame_content_3XrxZ::before {
   content: attr(show-text);
-  color: red;
+  color: #d52c2b;
   position: fixed;
   left: 0;
   width: 4em;
