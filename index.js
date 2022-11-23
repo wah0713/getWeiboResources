@@ -91,6 +91,79 @@
         delete data[href]
 
     })
+    // 旧版(兼容代码 开始)
+    console.log(`$('.Main_full_1dfQX')`, $('.Main_full_1dfQX'))
+    if (!$('.Main_full_1dfQX').length) {
+        const $plOfficialMyProfileFeed_18 = await walk(() => findDom('#Pl_Official_MyProfileFeed__18'))
+        $plOfficialMyProfileFeed_18.on('click', '.WB_detail > .WB_from.S_txt2', async function () {
+            const imgUrlList = await getfileUrlByInfo_old(this)
+            console.log(`imgUrlList`, imgUrlList)
+            const promiseList = imgUrlList.map((item, index) => getFileBlob(item, index, () => {
+                // data[href].num++
+                // const total = imgUrlList.length
+                // const num = data[href].num
+
+                // const percentage = new Intl.NumberFormat(undefined, {
+                //     maximumFractionDigits: 2
+                // }).format(num / total * 100)
+                // retextDom(this, `中${num}/ ${total}（${percentage}%）`)
+            }))
+            console.log(`promiseList`, promiseList)
+            const imageRes = await Promise.all(promiseList)
+            // const writerName = $(this).prev().find('.head_name_24eEB').text().trim()
+            // const time = $(this).find('.head-info_time_6sFQg').attr('title').trim() || $(this).find('.head-info_time_6sFQg').text().trim()
+            await pack(imageRes, `1`, )
+            // 下载成功
+            // retextDom(this, message.finish, href)
+            // delete data[href]
+        })
+
+
+    }
+
+    // 寻找DOM
+    function findDom(selectorStr) {
+        return new Promise((resolve) => {
+            setTimeout(() => {
+                const $Dom = $(selectorStr)
+                if ($Dom.length === 0) {
+                    resolve(false)
+                } else {
+                    resolve($Dom)
+                }
+            }, 200)
+        })
+    }
+
+    // 轮询
+    async function walk(callBack) {
+        const res = await callBack()
+        if (!res) {
+            return await walk(callBack)
+        } else {
+            return res
+        }
+    }
+    // 获取图片链接
+    async function getfileUrlByInfo_old(dom) {
+        const idList = []
+        $(dom).parents('.WB_detail').find('[node-type="feed_list_item_date"]').each((index, item) => {
+            idList.push($(item).attr('href').replace(/\?.*$/, '').match(/(?<=\/)\w+$/)[0])
+        })
+        const resList = await Promise.all(idList.map(getInfoById))
+        const urlList = []
+        resList.forEach(item => {
+            if (!item) return false;
+            [...Object.keys(item)].forEach(ele => {
+                urlList.push(item[ele].largest.url)
+                if (item[ele].type === 'livephoto') {
+                    urlList.push(item[ele].video)
+                }
+            })
+        })
+        return urlList
+    }
+    // 旧版(兼容代码 结束)
 
     // 打包
     function pack(imageRes, modification) {
@@ -224,6 +297,28 @@
     function gettextDom(dom, text) {
         return $(dom).attr('show-text')
     }
+
+    function clickEscKey() {
+        const evt = document.createEvent('UIEvents');
+        Object.defineProperty(evt, 'keyCode', {
+            get: function () {
+                return this.keyCodeVal;
+            }
+        });
+        Object.defineProperty(evt, 'which', {
+            get: function () {
+                return this.keyCodeVal;
+            }
+        });
+        evt.keyCodeVal = 27;
+        evt.initEvent('keydown', true, true);
+        document.body.dispatchEvent(evt);
+    }
+
+    // 预览图片时，点击图片关闭预览功能
+    $('.imgInstance.Viewer_imgElm_2JHWe').on('click', () => {
+        clickEscKey()
+    })
 
     GM_addStyle(`
     .woo-box-flex .head-info_info_2AspQ:not(.Feed_retweetHeadInfo_Tl4Ld):after{content:"下载" attr(show-text);color:#ff8200;cursor:pointer}.woo-box-flex.Frame_content_3XrxZ:before{content:attr(show-text);color:#d52c2b;position:fixed;left:0;width:4em}
