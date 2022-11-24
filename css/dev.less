@@ -6,7 +6,23 @@
     }
 }
 
+.WB_detail>.WB_from.S_txt2 {
+    &::after {
+        content: '下载'attr(show-text);
+        color: #ff8200;
+        cursor: pointer;
+        float: right;
+    }
+}
+
 .woo-box-flex.Frame_content_3XrxZ::before {
+    content: attr(show-text);
+    color: #d52c2b;
+    position: fixed;
+    left: 0;
+    width: 4em;
+}
+.WB_miniblog_fb::before {
     content: attr(show-text);
     color: #d52c2b;
     position: fixed;

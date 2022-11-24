@@ -34,19 +34,24 @@
         finish: '完成'
     }
     const $frameContent = $('.woo-box-flex.Frame_content_3XrxZ')
+    // 兼容旧版
+    const $wbMiniblog = $('.WB_miniblog_fb')
 
     const data = new Proxy({}, {
         set(target, propKey, value, receiver) {
             const num = [...Object.keys(target)].length + 1
             retextDom($frameContent, `进行中的下载任务数：${num}`)
+            retextDom($wbMiniblog, `进行中的下载任务数：${num}`)
             return Reflect.set(target, propKey, value, receiver);
         },
         deleteProperty(target, propKey) {
             const num = [...Object.keys(target)].length - 1
             if (num) {
                 retextDom($frameContent, `进行中的下载任务数：${num}`)
+                retextDom($wbMiniblog, `进行中的下载任务数：${num}`)
             } else {
                 retextDom($frameContent, '')
+                retextDom($wbMiniblog, '')
             }
             delete target[propKey];
             return true
@@ -92,57 +97,45 @@
 
     })
     // 旧版(兼容代码 开始)
-    console.log(`$('.Main_full_1dfQX')`, $('.Main_full_1dfQX'))
     if (!$('.Main_full_1dfQX').length) {
-        const $plOfficialMyProfileFeed_18 = await walk(() => findDom('#Pl_Official_MyProfileFeed__18'))
-        $plOfficialMyProfileFeed_18.on('click', '.WB_detail > .WB_from.S_txt2', async function () {
+        $('body').on('click', '.WB_detail > .WB_from.S_txt2', async function () {
+
+            if (![message.noImageError, message.finish, undefined, ''].includes(gettextDom(this))) return false
+            const href = $(this).find('[node-type="feed_list_item_date"]').attr('href')
+
+            data[href] = {
+                num: 0
+            }
+
+            retextDom(this, message.getReady)
             const imgUrlList = await getfileUrlByInfo_old(this)
-            console.log(`imgUrlList`, imgUrlList)
+            if (imgUrlList.length <= 0) {
+                // 没有资源
+                retextDom(this, message.noImageError, href)
+                delete data[href]
+                return false
+            }
+
             const promiseList = imgUrlList.map((item, index) => getFileBlob(item, index, () => {
-                // data[href].num++
-                // const total = imgUrlList.length
-                // const num = data[href].num
+                data[href].num++
+                const total = imgUrlList.length
+                const num = data[href].num
 
-                // const percentage = new Intl.NumberFormat(undefined, {
-                //     maximumFractionDigits: 2
-                // }).format(num / total * 100)
-                // retextDom(this, `中${num}/ ${total}（${percentage}%）`)
+                const percentage = new Intl.NumberFormat(undefined, {
+                    maximumFractionDigits: 2
+                }).format(num / total * 100)
+                retextDom(this, `中${num}/ ${total}（${percentage}%）`)
             }))
-            console.log(`promiseList`, promiseList)
             const imageRes = await Promise.all(promiseList)
-            // const writerName = $(this).prev().find('.head_name_24eEB').text().trim()
-            // const time = $(this).find('.head-info_time_6sFQg').attr('title').trim() || $(this).find('.head-info_time_6sFQg').text().trim()
-            await pack(imageRes, `1`, )
+            const writerName = $(this).prev().find('.W_f14.W_fb.S_txt1').text().trim()
+            const time = $(this).find('[node-type="feed_list_item_date"]').attr('title').trim() || $(this).find('[node-type="feed_list_item_date"]').text().trim()
+            await pack(imageRes, `${writerName}${time}`, )
             // 下载成功
-            // retextDom(this, message.finish, href)
-            // delete data[href]
+            retextDom(this, message.finish, href)
+            delete data[href]
         })
 
 
-    }
-
-    // 寻找DOM
-    function findDom(selectorStr) {
-        return new Promise((resolve) => {
-            setTimeout(() => {
-                const $Dom = $(selectorStr)
-                if ($Dom.length === 0) {
-                    resolve(false)
-                } else {
-                    resolve($Dom)
-                }
-            }, 200)
-        })
-    }
-
-    // 轮询
-    async function walk(callBack) {
-        const res = await callBack()
-        if (!res) {
-            return await walk(callBack)
-        } else {
-            return res
-        }
     }
     // 获取图片链接
     async function getfileUrlByInfo_old(dom) {
@@ -321,7 +314,7 @@
     })
 
     GM_addStyle(`
-    .woo-box-flex .head-info_info_2AspQ:not(.Feed_retweetHeadInfo_Tl4Ld):after{content:"下载" attr(show-text);color:#ff8200;cursor:pointer}.woo-box-flex.Frame_content_3XrxZ:before{content:attr(show-text);color:#d52c2b;position:fixed;left:0;width:4em}
+    .WB_detail>.WB_from.S_txt2:after,.woo-box-flex .head-info_info_2AspQ:not(.Feed_retweetHeadInfo_Tl4Ld):after{content:"下载" attr(show-text);color:#ff8200;cursor:pointer}.WB_detail>.WB_from.S_txt2:after{float:right}.WB_miniblog_fb:before,.woo-box-flex.Frame_content_3XrxZ:before{content:attr(show-text);color:#d52c2b;position:fixed;left:0;width:4em}
     `)
 
     // // debugJS
