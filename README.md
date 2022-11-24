@@ -1,22 +1,18 @@
 # [微博一键取图（9宫格）](https://greasyfork.org/zh-CN/scripts/454816)
 
-### 当前版本1.02效果图：
+### 当前版本1.03效果图：
+
+ 1、兼容旧版<br>
+
+![当前版本1.03][1.03]
+
+### 上个版本1.02效果图：
 
  1、支持下载live图<br>
 
-![当前版本1.02-part1](https://wah0713.github.io/getWeiboImage/image/1.02-part1.png)
+![上个版本1.02-part1][1.02-part1]
 
-![当前版本1.02-part2](https://wah0713.github.io/getWeiboImage/image/1.02-part2.png)
-
-### 上个版本1.01效果图：
-
-1、下载图片 <br>
-2、支持最多18图下载 <br>
-3、不支持下载视频 <br>
-
-![上个版本1.01-part1](https://wah0713.github.io/getWeiboImage/image/1.01-part1.png)
-
-![上个版本1.01-part2](https://wah0713.github.io/getWeiboImage/image/1.01-part2.png)
+![上个版本1.02-part2][1.02-part2]
 
 ### bug和建议：
 
@@ -26,3 +22,6 @@
 
 这个脚本是工作之余，自己<del>低级程序员</del>练练手，所以也不要有太多期待。
 <!-- weibo/wb -->
+[1.03]:https://wah0713.github.io/getWeiboImage/image/1.03.png
+[1.02-part1]:https://wah0713.github.io/getWeiboImage/image/1.02-part1.png
+[1.02-part2]:https://wah0713.github.io/getWeiboImage/image/1.02-part2.png

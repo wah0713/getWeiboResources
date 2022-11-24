@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         微博一键取图（9宫格）
 // @namespace    https://github.com/wah0713/getWeiboImage
-// @version      1.02
+// @version      1.03
 // @description  一个兴趣使然的脚本，微博一键取图脚本。
 // @supportURL   https://github.com/wah0713/getWeiboImage/issues
 // @updateURL    https://greasyfork.org/scripts/454816-%E5%BE%AE%E5%8D%9A%E4%B8%80%E9%94%AE%E5%8F%96%E5%9B%BE-9%E5%AE%AB%E6%A0%BC/code/%E5%BE%AE%E5%8D%9A%E4%B8%80%E9%94%AE%E5%8F%96%E5%9B%BE%EF%BC%889%E5%AE%AB%E6%A0%BC%EF%BC%89.user.js
@@ -12,6 +12,7 @@
 // @require      https://cdn.bootcss.com/jquery/1.12.4/jquery.min.js
 // @require      https://cdn.bootcss.com/jszip/3.9.1/jszip.min.js
 // @match        *://weibo.com/*
+// @match        *://d.weibo.com/*
 // @connect      sinaimg.cn
 // @connect      weibo.com
 // @noframes     true
@@ -97,7 +98,6 @@
     // 旧版(兼容代码 开始)
     if (!$('.Main_full_1dfQX').length) {
         $('body').on('click', '.WB_detail > .WB_from.S_txt2', async function () {
-
             if (![message.noImageError, message.finish, undefined, ''].includes(gettextDom(this))) return false
             const href = $(this).find('[node-type="feed_list_item_date"]').attr('href')
 
@@ -132,8 +132,6 @@
             retextDom(this, message.finish, href)
             delete data[href]
         })
-
-
     }
     // 获取图片链接
     async function getfileUrlByInfo_old(dom) {
@@ -294,8 +292,8 @@
     .WB_detail>.WB_from.S_txt2:after,.woo-box-flex .head-info_info_2AspQ:not(.Feed_retweetHeadInfo_Tl4Ld):after{content:"下载" attr(show-text);color:#ff8200;cursor:pointer}.WB_detail>.WB_from.S_txt2:after{float:right}.WB_miniblog_fb:before,.woo-box-flex.Frame_content_3XrxZ:before{content:attr(show-text);color:#d52c2b;position:fixed;left:0;width:4em}
     `)
 
-    // // debugJS
-    // isDebug = true
-    // unsafeWindow.$ = $
-    // setTimeout(() => {}, 5 * 1000);
+    // debugJS
+    isDebug = true
+    unsafeWindow.$ = $
+    setTimeout(() => {}, 5 * 1000);
 })()
