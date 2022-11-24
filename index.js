@@ -67,7 +67,6 @@
         }
 
         retextDom(this, message.getReady)
-        // const imgUrlList = getfileUrlByDom(this)
         const imgUrlList = await getfileUrlByInfo(this)
         if (imgUrlList.length <= 0) {
             // 没有资源
@@ -75,7 +74,6 @@
             delete data[href]
             return false
         }
-
 
         const promiseList = imgUrlList.map((item, index) => getFileBlob(item, index, () => {
             data[href].num++
@@ -215,27 +213,6 @@
         })
     }
 
-    // 通过dom获取链接
-    function getfileUrlByDom(dom) {
-        const UrlList = []
-        const $imgDomList = $(dom).parents('.Feed_body_3R0rO').find('.picture.content_row_-r5Tk .woo-picture-slot')
-
-        $imgDomList.each((index, item) => {
-            let fileDom = null
-            if ($(item).find('img,video').length) {
-                fileDom = $(item).find('img,video')[0]
-            } else {
-                fileDom = $(item).prevAll('img,video')[0]
-            }
-            let url = fileDom.src
-            if (fileDom.nodeName === 'IMG') {
-                url = fileDom.src.replace(/(?<=(cn)\/).+(?=(\/))/, 'large')
-            }
-            UrlList.push(url)
-        })
-        return UrlList
-    }
-
     // 通过id获取链接
     function getInfoById(id) {
         return new Promise((resolve, rejcet) => {
@@ -287,7 +264,7 @@
     }
 
     // 获取dom文本
-    function gettextDom(dom, text) {
+    function gettextDom(dom) {
         return $(dom).attr('show-text')
     }
 
