@@ -89,7 +89,7 @@
         const imageRes = await Promise.all(promiseList)
         const writerName = $(this).prev().find('.head_name_24eEB').text().trim()
         const time = $(this).find('.head-info_time_6sFQg').attr('title').trim() || $(this).find('.head-info_time_6sFQg').text().trim()
-        await pack(imageRes, `${writerName} ${time}`, )
+        await pack(imageRes, `${writerName} ${time}`)
         // 下载成功
         retextDom(this, message.finish, href)
         delete data[href]
@@ -127,7 +127,7 @@
             const imageRes = await Promise.all(promiseList)
             const writerName = $(this).prev().find('.W_f14.W_fb.S_txt1').text().trim()
             const time = $(this).find('[node-type="feed_list_item_date"]').attr('title').trim() || $(this).find('[node-type="feed_list_item_date"]').text().trim()
-            await pack(imageRes, `${writerName} ${time}`, )
+            await pack(imageRes, `${writerName} ${time}`)
             // 下载成功
             retextDom(this, message.finish, href)
             delete data[href]
