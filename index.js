@@ -289,11 +289,11 @@
     })
 
     GM_addStyle(`
-    .WB_detail>.WB_from.S_txt2:after,.woo-box-flex .head-info_info_2AspQ:not(.Feed_retweetHeadInfo_Tl4Ld):after{content:"下载" attr(show-text);color:#ff8200;cursor:pointer}.WB_detail>.WB_from.S_txt2:after{float:right}.WB_miniblog_fb:before,.woo-box-flex.Frame_content_3XrxZ:before{content:attr(show-text);color:#d52c2b;position:fixed;left:0;width:4em}
+    .WB_detail>.WB_from.S_txt2:after,.woo-box-flex .head-info_info_2AspQ:not(.Feed_retweetHeadInfo_Tl4Ld):after{content:"下载" attr(show-text);color:#ff8200;cursor:pointer}.WB_detail>.WB_from.S_txt2:after{float:right}.WB_miniblog_fb:before,.woo-box-flex.Frame_content_3XrxZ:before{content:attr(show-text);color:#d52c2b;position:fixed;left:0;width:4em}.WB_miniblog_fb:before{font-size:16px}
     `)
 
-    // debugJS
-    isDebug = true
-    unsafeWindow.$ = $
-    setTimeout(() => {}, 5 * 1000);
+    // // debugJS
+    // isDebug = true
+    // unsafeWindow.$ = $
+    // setTimeout(() => {}, 5 * 1000);
 })()
