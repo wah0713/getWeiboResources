@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         微博一键取图（9宫格）
 // @namespace    https://github.com/wah0713/getWeiboImage
-// @version      1.03
+// @version      1.04
 // @description  一个兴趣使然的脚本，微博一键取图脚本。
 // @supportURL   https://github.com/wah0713/getWeiboImage/issues
 // @updateURL    https://greasyfork.org/scripts/454816-%E5%BE%AE%E5%8D%9A%E4%B8%80%E9%94%AE%E5%8F%96%E5%9B%BE-9%E5%AE%AB%E6%A0%BC/code/%E5%BE%AE%E5%8D%9A%E4%B8%80%E9%94%AE%E5%8F%96%E5%9B%BE%EF%BC%889%E5%AE%AB%E6%A0%BC%EF%BC%89.user.js
@@ -31,7 +31,6 @@
 // @run-at       document-idle
 // @grant        GM_addStyle
 // @grant        GM_xmlhttpRequest
-// @grant        GM_download
 // @grant        unsafeWindow
 // ==/UserScript==
 
@@ -179,20 +178,19 @@
             zip.generateAsync({
                 type: 'blob'
             }).then((content) => {
-                GM_download({
-                    url: URL.createObjectURL(content),
-                    name: `${modification}.zip`,
-                    onload: (res) => {
-                        isDebug && console.log(`pack-onload`, res)
-                        resolve(res)
-                    },
-                    onerror: (res) => {
-                        isDebug && console.log(`pack-onerror`, res)
-                        resolve(res)
-                    }
-                })
+                download(URL.createObjectURL(content), `${modification}.zip`)
+                resolve(true)
             })
         })
+    }
+
+    // 模拟点击下载
+    function download(url, fileName) {
+        const a = document.createElement('a')
+        a.setAttribute('href', url)
+        a.setAttribute('download', fileName)
+        a.click()
+        a.remove()
     }
 
     // 下载
@@ -278,6 +276,7 @@
         return $(dom).attr('show-text')
     }
 
+    // 模拟esc
     function clickEscKey() {
         const evt = document.createEvent('UIEvents');
         Object.defineProperty(evt, 'keyCode', {
