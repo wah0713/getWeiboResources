@@ -10,7 +10,7 @@
 // @license      MIT
 // @icon         https://weibo.com/favicon.ico
 // @require      https://cdn.bootcss.com/jquery/1.12.4/jquery.min.js
-// @require      https://cdn.bootcss.com/jszip/3.9.1/jszip.min.js
+// @require      https://cdn.bootcss.com/jszip/3.1.5/jszip.min.js
 // @match        *://weibo.com/*
 // @match        *://d.weibo.com/*
 // @match        *://weibo.com/*
@@ -167,7 +167,7 @@
 
     // 打包
     function pack(imageRes, modification) {
-        var zip = new JSZip();
+        const zip = new JSZip();
         imageRes.forEach(function (obj) {
             const suffixName = new URL(obj.finalUrl).pathname.match(/\.\w+$/)[0]
             const name = `${modification}-part${String(obj._id).padStart(2,'0')}${suffixName}`
