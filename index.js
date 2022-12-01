@@ -13,7 +13,6 @@
 // @require      https://cdn.bootcss.com/jszip/3.1.5/jszip.min.js
 // @match        *://weibo.com/*
 // @match        *://d.weibo.com/*
-// @match        *://weibo.com/*
 // @match        *://*.weibo.com/*
 // @match        *://t.cn/*
 // @exclude      *://weibo.com/a/bind/*
