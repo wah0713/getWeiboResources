@@ -69,8 +69,8 @@
         }
     })
 
-    $('.Main_full_1dfQX').on('click', '.woo-box-flex .head-info_info_2AspQ:not(.Feed_retweetHeadInfo_Tl4Ld)', async function () {
-        if (![message.noImageError, message.finish, undefined, ''].includes(gettextDom(this))) return false
+    $('.Main_full_1dfQX').on('click', '.woo-box-flex .head-info_info_2AspQ:not(.Feed_retweetHeadInfo_Tl4Ld)', async function (event) {
+        if (event.target.className !== event.currentTarget.className || ![message.noImageError, message.finish, undefined, ''].includes(gettextDom(this))) return false
         const href = $(this).find('.head-info_time_6sFQg').attr('href')
 
         data[href] = {
@@ -107,8 +107,8 @@
     })
     // 旧版(兼容代码 开始)
     if (!$('.Main_full_1dfQX').length) {
-        $('body').on('click', '.WB_detail > .WB_from.S_txt2', async function () {
-            if (![message.noImageError, message.finish, undefined, ''].includes(gettextDom(this))) return false
+        $('body').on('click', '.WB_detail > .WB_from.S_txt2', async function (event) {
+            if (event.target.className !== event.currentTarget.className || ![message.noImageError, message.finish, undefined, ''].includes(gettextDom(this))) return false
             const href = $(this).find('[node-type="feed_list_item_date"]').attr('href')
 
             data[href] = {
