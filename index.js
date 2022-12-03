@@ -176,7 +176,11 @@
                 responseType: 'json',
                 onload: (res) => {
                     isDebug && console.log(`getInfoById-onload`, res)
-                    resolve(res.response.pic_infos)
+                    try {
+                        resolve(res.response.pic_infos)
+                    } catch (error) {
+                        resolve(null)
+                    }
                 },
                 onerror: (res) => {
                     isDebug && console.log(`getInfoById-onerror`, res)
