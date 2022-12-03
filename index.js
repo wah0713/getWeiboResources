@@ -250,30 +250,6 @@
         clickEscKey()
     })
 
-    // 寻找DOM
-    function findDom(selectorStr) {
-        return new Promise((resolve) => {
-            setTimeout(() => {
-                const $Dom = $(selectorStr)
-                if ($Dom.length === 0) {
-                    resolve(false)
-                } else {
-                    resolve($Dom)
-                }
-            }, 200)
-        })
-    }
-
-    // 轮询
-    async function walk(callBack) {
-        const res = await callBack()
-        if (!res) {
-            return await walk(callBack)
-        } else {
-            return res
-        }
-    }
-
     if (isNew) {
         // 新版
         $('.Main_full_1dfQX').on('click', '.woo-box-flex .head-info_info_2AspQ:not(.Feed_retweetHeadInfo_Tl4Ld)', async function (event) {
@@ -322,7 +298,6 @@
 
         $frameContent.prepend('<div id="wah0713"></div>')
 
-        const $scrollerItemViewLastChild = await walk(() => findDom('.vue-recycle-scroller__item-wrapper >.vue-recycle-scroller__item-view:last-child'))
         const observer = new MutationObserver(() => {
             $(`.head-info_info_2AspQ`).attr('show-text', '');
             requestAnimationFrame(() => {
@@ -334,10 +309,11 @@
                 })
             })
         });
-        observer.observe($scrollerItemViewLastChild[0], {
-            attributes: true,
-            attributeFilter: ['style']
+        observer.observe($frameContent[0], {
+            childList: true,
+            subtree: true
         });
+
     } else {
         // 旧版
         if (!$('.Main_full_1dfQX').length) {
