@@ -9,18 +9,20 @@
   cursor: pointer;
   float: right;
 }
-.woo-box-flex.Frame_content_3XrxZ::before {
-  content: attr(show-text);
-  color: #d52c2b;
+.woo-box-flex.Frame_content_3XrxZ #wah0713,
+.WB_miniblog_fb #wah0713 {
   position: fixed;
   left: 0;
-  width: 4em;
+  color: #d52c2b;
+  font-size: 12px;
+  font-weight: bold;
 }
-.WB_miniblog_fb::before {
-  content: attr(show-text);
-  color: #d52c2b;
-  position: fixed;
-  left: 0;
-  width: 4em;
-  font-size: 16px;
+.woo-box-flex.Frame_content_3XrxZ #wah0713 > p,
+.WB_miniblog_fb #wah0713 > p {
+  line-height: 16px;
+  margin: 4px;
+}
+.woo-box-flex.Frame_content_3XrxZ #wah0713 > p span,
+.WB_miniblog_fb #wah0713 > p span {
+  color: #333;
 }

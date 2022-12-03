@@ -3,6 +3,7 @@
 <details>
 <summary>📔功能介绍(点击查看)</summary>
 <pre>
+8、记录下载状态（1.05）
 7、兼容火狐浏览器（1.04）
 6、兼容旧版（1.03）
 5、新版全屏预览图片时，再次点击图片退出全屏预览(1.03)
@@ -13,23 +14,21 @@
 </pre>
 </details>
 
-### 当前版本1.03效果图：
+### 当前版本1.05效果图：
+
+<pre>
+ 1、记录下载状态
+</pre>
+
+![当前版本1.05][1.05]
+
+### 上个版本1.03效果图：
 
 <pre>
  1、兼容旧版
 </pre>
 
-![当前版本1.03][1.03]
-
-### 上个版本1.02效果图：
-
-<pre>
- 1、支持下载live图
-</pre>
-
-![上个版本1.02-part1][1.02-part1]
-
-![上个版本1.02-part2][1.02-part2]
+![上个版本1.03][1.03]
 
 ### 🐞bug和💡建议：
 
@@ -40,5 +39,4 @@
 这个脚本是工作之余，自己<del>低级程序员</del>练练手，所以也不要有太多期待。
 <!-- weibo/wb -->
 [1.03]:https://wah0713.github.io/getWeiboImage/image/1.03.png
-[1.02-part1]:https://wah0713.github.io/getWeiboImage/image/1.02-part1.png
-[1.02-part2]:https://wah0713.github.io/getWeiboImage/image/1.02-part2.png
+[1.05]:https://wah0713.github.io/getWeiboImage/image/1.05.png
