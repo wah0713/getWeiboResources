@@ -13,17 +13,7 @@
 // @require      https://cdn.bootcss.com/jszip/3.1.5/jszip.min.js
 // @match        *://weibo.com/*
 // @match        *://d.weibo.com/*
-// @match        *://*.weibo.com/*
 // @match        *://t.cn/*
-// @exclude      *://weibo.com/a/bind/*
-// @exclude      *://account.weibo.com/*
-// @exclude      *://kefu.weibo.com/*
-// @exclude      *://photo.weibo.com/*
-// @exclude      *://security.weibo.com/*
-// @exclude      *://verified.weibo.com/*
-// @exclude      *://vip.weibo.com/*
-// @exclude      *://open.weibo.com/*
-// @exclude      *://passport.weibo.com/*
 // @connect      sinaimg.cn
 // @connect      weibo.com
 // @noframes     true
@@ -34,19 +24,22 @@
 // ==/UserScript==
 
 (async function () {
+    const $frameContent = $('.woo-box-flex.Frame_content_3XrxZ')
+    const $wbMiniblog = $('.WB_miniblog_fb')
+
+    if ($frameContent.length === 0 && $wbMiniblog.length === 0) return false
+
     // 是否开启dubug模式
     let isDebug = false
     // 定时器集合
     const timerObject = {}
     // 消息
     const message = {
-        notStarted: '',
         getReady: '准备中',
         noImageError: '失败，未找到图片资源',
         finish: '完成'
     }
-    const $frameContent = $('.woo-box-flex.Frame_content_3XrxZ')
-    const $wbMiniblog = $('.WB_miniblog_fb')
+
     const isNew = $frameContent.length > 0
     const notice = {
         completedQuantity: 0,
@@ -190,26 +183,6 @@
         })
     }
 
-    // 获取图片链接
-    async function getfileUrlByInfo(dom) {
-        const idList = []
-        $(dom).parents('.Feed_body_3R0rO').find('.head-info_time_6sFQg').each((index, item) => {
-            idList.push($(item).attr('href').match(/(?<=\/)\w+$/)[0])
-        })
-        const resList = await Promise.all(idList.map(getInfoById))
-        const urlList = []
-        resList.forEach(item => {
-            if (!item) return false;
-            [...Object.keys(item)].forEach(ele => {
-                urlList.push(item[ele].largest.url)
-                if (item[ele].type === 'livephoto') {
-                    urlList.push(item[ele].video)
-                }
-            })
-        })
-        return urlList
-    }
-
     // dom修改文本
     function retextDom(dom, text, timer) {
         const $dom = $(dom)
@@ -297,6 +270,26 @@
         })
 
         $frameContent.prepend('<div id="wah0713"></div>')
+
+        // 获取图片链接
+        async function getfileUrlByInfo(dom) {
+            const idList = []
+            $(dom).parents('.Feed_body_3R0rO').find('.head-info_time_6sFQg').each((index, item) => {
+                idList.push($(item).attr('href').match(/(?<=\/)\w+$/)[0])
+            })
+            const resList = await Promise.all(idList.map(getInfoById))
+            const urlList = []
+            resList.forEach(item => {
+                if (!item) return false;
+                [...Object.keys(item)].forEach(ele => {
+                    urlList.push(item[ele].largest.url)
+                    if (item[ele].type === 'livephoto') {
+                        urlList.push(item[ele].video)
+                    }
+                })
+            })
+            return urlList
+        }
 
         const observer = new MutationObserver(() => {
             $(`.head-info_info_2AspQ`).attr('show-text', '');
