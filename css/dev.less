@@ -18,18 +18,39 @@
 .woo-box-flex.Frame_content_3XrxZ,
 .WB_miniblog_fb {
     #wah0713 {
-        position: fixed;
-        left: 0;
-        color: #d52c2b;
         font-size: 12px;
         font-weight: bold;
 
-        >p {
-            line-height: 16px;
-            margin: 4px;
+        .container {
+            position: fixed;
+            left: 0;
+        }
 
-            span {
-                color: #333;
+        &:hover {
+            .input-box {
+                display: block;
+            }
+        }
+
+        input {
+            width: 3em;
+            color: #d52c2b;
+        }
+
+        .input-box {
+            display: none;
+        }
+
+        .showMessage {
+            color: #d52c2b;
+
+            >p {
+                line-height: 16px;
+                margin: 4px;
+
+                span {
+                    color: #333;
+                }
             }
         }
     }

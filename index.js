@@ -19,6 +19,8 @@
 // @noframes     true
 // @run-at       document-idle
 // @grant        GM_addStyle
+// @grant        GM_setValue
+// @grant        GM_getValue
 // @grant        GM_xmlhttpRequest
 // @grant        unsafeWindow
 // ==/UserScript==
@@ -39,6 +41,8 @@
         noImageError: '失败，未找到图片资源',
         finish: '完成'
     }
+    // 左边显示的消息数
+    let messagesNumber = GM_getValue('messagesNumber', 5)
 
     const isNew = $frameContent.length > 0
     const notice = {
@@ -88,8 +92,7 @@
                 notice.completedQuantity--
             }
         })
-
-        notice.messagelist = notice.messagelist.filter(item => item.title !== title).slice(0, 30)
+        notice.messagelist = notice.messagelist.filter(item => item.title !== title).slice(-(messagesNumber - 1))
         notice.messagelist.push({
             title: title,
             message: `下载${value}`
@@ -97,7 +100,7 @@
 
         const tempList = JSON.parse(JSON.stringify(notice.messagelist))
 
-        $('#wah0713').html(`
+        $('#wah0713 .container .showMessage').html(`
             <p><span>进行中的下载任务数：</span>${notice.completedQuantity}</p>
             ${tempList.reverse().map(item=>{
                 return `<p><span>${item.title}：</span>${item.message}</p>`
@@ -269,7 +272,26 @@
             data[href].message = message.finish
         })
 
-        $frameContent.prepend('<div id="wah0713"></div>')
+        $frameContent.prepend(`
+        <div id="wah0713">
+                <div class="container">
+                        <div class="input-box">需要显示的消息条数：<input type="number" max="40" min="3" value="${messagesNumber}" step=1>
+                        </div>
+                        <div class="showMessage"></div>
+                </div>
+        </div>
+       `)
+        $('#wah0713 .container .input-box input').change(event => {
+            event.target.value = event.target.value | 0
+            if (event.target.value > 40) {
+                event.target.value = 40
+            }
+            if (event.target.value < 5) {
+                event.target.value = 5
+            }
+            messagesNumber = event.target.value
+            GM_setValue('messagesNumber', messagesNumber)
+        })
 
         // 获取图片链接
         async function getfileUrlByInfo(dom) {
@@ -355,7 +377,26 @@
             })
         }
 
-        $wbMiniblog.prepend('<div id="wah0713"></div>')
+        $wbMiniblog.prepend(`
+        <div id="wah0713">
+                <div class="container">
+                        <div class="input-box">需要显示的消息条数：<input type="number" max="40" min="3" value="${messagesNumber}" step=1>
+                        </div>
+                        <div class="showMessage"></div>
+                </div>
+        </div>
+        `)
+        $('#wah0713 .container .input-box input').change(event => {
+            event.target.value = event.target.value | 0
+            if (event.target.value > 40) {
+                event.target.value = 40
+            }
+            if (event.target.value < 5) {
+                event.target.value = 5
+            }
+            messagesNumber = event.target.value
+            GM_setValue('messagesNumber', messagesNumber)
+        })
 
         // 获取图片链接
         async function getfileUrlByInfo_old(dom) {
@@ -379,7 +420,7 @@
     }
 
     GM_addStyle(`
-    .WB_detail>.WB_from.S_txt2:after,.woo-box-flex .head-info_info_2AspQ:not(.Feed_retweetHeadInfo_Tl4Ld):after{content:"下载" attr(show-text);color:#ff8200;cursor:pointer}.WB_detail>.WB_from.S_txt2:after{float:right}.WB_miniblog_fb #wah0713,.woo-box-flex.Frame_content_3XrxZ #wah0713{position:fixed;left:0;color:#d52c2b;font-size:12px;font-weight:700}.WB_miniblog_fb #wah0713>p,.woo-box-flex.Frame_content_3XrxZ #wah0713>p{line-height:16px;margin:4px}.WB_miniblog_fb #wah0713>p span,.woo-box-flex.Frame_content_3XrxZ #wah0713>p span{color:#333}
+    .WB_detail>.WB_from.S_txt2:after,.woo-box-flex .head-info_info_2AspQ:not(.Feed_retweetHeadInfo_Tl4Ld):after{content:"下载" attr(show-text);color:#ff8200;cursor:pointer}.WB_detail>.WB_from.S_txt2:after{float:right}.WB_miniblog_fb #wah0713,.woo-box-flex.Frame_content_3XrxZ #wah0713{font-size:12px;font-weight:700}.WB_miniblog_fb #wah0713 .container,.woo-box-flex.Frame_content_3XrxZ #wah0713 .container{position:fixed;left:0}.WB_miniblog_fb #wah0713:hover .input-box,.woo-box-flex.Frame_content_3XrxZ #wah0713:hover .input-box{display:block}.WB_miniblog_fb #wah0713 input,.woo-box-flex.Frame_content_3XrxZ #wah0713 input{width:3em;color:#d52c2b}.WB_miniblog_fb #wah0713 .input-box,.woo-box-flex.Frame_content_3XrxZ #wah0713 .input-box{display:none}.WB_miniblog_fb #wah0713 .showMessage,.woo-box-flex.Frame_content_3XrxZ #wah0713 .showMessage{color:#d52c2b}.WB_miniblog_fb #wah0713 .showMessage>p,.woo-box-flex.Frame_content_3XrxZ #wah0713 .showMessage>p{line-height:16px;margin:4px}.WB_miniblog_fb #wah0713 .showMessage>p span,.woo-box-flex.Frame_content_3XrxZ #wah0713 .showMessage>p span{color:#333}
     `)
 
     // // debugJS
