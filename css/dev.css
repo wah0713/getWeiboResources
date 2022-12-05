@@ -27,6 +27,9 @@
 .WB_miniblog_fb #wah0713 input {
   width: 3em;
   color: #d52c2b;
+  border-width: 1px;
+  outline: 0;
+  background-color: transparent;
 }
 .woo-box-flex.Frame_content_3XrxZ #wah0713 .input-box,
 .WB_miniblog_fb #wah0713 .input-box {
