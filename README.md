@@ -38,5 +38,5 @@
 
 这个脚本是工作之余，自己<del>低级程序员</del>练练手，所以也不要有太多期待。
 <!-- weibo/wb -->
-[1.03]:https://wah0713.github.io/getWeiboImage/image/1.03.png
-[1.05]:https://wah0713.github.io/getWeiboImage/image/1.05.png
+[1.03]:https://img-blog.csdnimg.cn/661d417ec4794a0ab3d8ee5b4aa2eb30.png
+[1.05]:https://img-blog.csdnimg.cn/d1c6d2ef67394d5ca65836e05c7e24c9.png
