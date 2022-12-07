@@ -222,12 +222,8 @@
         evt.initEvent('keydown', true, true);
         document.body.dispatchEvent(evt);
     }
-
     // 预览图片时，点击图片关闭预览功能
-    $('.imgInstance.Viewer_imgElm_2JHWe').on('click', () => {
-        clickEscKey()
-    })
-
+    $('.imgInstance.Viewer_imgElm_2JHWe').on('click', clickEscKey)
     if (isNew) {
         // 新版
         $('.Main_full_1dfQX').on('click', '.woo-box-flex .head-info_info_2AspQ:not(.Feed_retweetHeadInfo_Tl4Ld)', async function (event) {
