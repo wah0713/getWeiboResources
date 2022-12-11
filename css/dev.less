@@ -6,17 +6,7 @@
     }
 }
 
-.WB_detail>.WB_from.S_txt2 {
-    &::after {
-        content: '下载'attr(show-text);
-        color: #ff8200;
-        cursor: pointer;
-        float: right;
-    }
-}
-
-.woo-box-flex.Frame_content_3XrxZ,
-.WB_miniblog_fb {
+.woo-box-flex.Frame_content_3XrxZ {
     #wah0713 {
         font-size: 12px;
         font-weight: bold;
@@ -45,7 +35,7 @@
         }
 
         .showMessage {
-            color: #d52c2b;
+
 
             >p {
                 line-height: 16px;
@@ -53,6 +43,14 @@
 
                 span {
                     color: #333;
+
+                    &.red {
+                        color: #d52c2b;
+
+                        &.downloadBtn {
+                            cursor: pointer;
+                        }
+                    }
                 }
             }
         }

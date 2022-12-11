@@ -12,7 +12,7 @@
 // @require      https://cdn.bootcss.com/jquery/1.12.4/jquery.min.js
 // @require      https://cdn.bootcss.com/jszip/3.1.5/jszip.min.js
 // @match        *://weibo.com/*
-// @match        *://d.weibo.com/*
+// @match        *://*.weibo.com/*
 // @match        *://t.cn/*
 // @connect      sinaimg.cn
 // @connect      weibo.com
@@ -27,9 +27,8 @@
 
 (async function () {
     const $frameContent = $('.woo-box-flex.Frame_content_3XrxZ')
-    const $wbMiniblog = $('.WB_miniblog_fb')
 
-    if ($frameContent.length === 0 && $wbMiniblog.length === 0) return false
+    if ($frameContent.length === 0) return false
 
     // 是否开启dubug模式
     let isDebug = false
@@ -46,7 +45,6 @@
     const max = 40
     const min = 3
 
-    const isNew = $frameContent.length > 0
     const notice = {
         completedQuantity: 0,
         messagelist: []
@@ -66,46 +64,44 @@
     const data = reactive({}, (target, propKey, value, receiver) => {
         const {
             name,
-            title
         } = target
-        if (isNew) {
-            if (propKey === 'message') {
-                retextDom($(`.head-info_info_2AspQ:has(>[href="${name}"])`), value)
-                handleMessage(title, value)
-            }
-        } else {
-            if (propKey === 'message') {
-                retextDom($(`.WB_from.S_txt2:has(>[href="${name}"])`), value)
-                handleMessage(title, value)
-            }
+        if (propKey === 'message') {
+            retextDom($(`.head-info_info_2AspQ:has(>[href="${name}"])`), value)
+            handleMessage(target, value)
         }
     })
 
-    function handleMessage(title, value) {
+    function handleMessage(target, value) {
+        const {
+            name,
+            title
+        } = target
         const list = [...Object.keys(data)]
         notice.completedQuantity = list.length;
         list.forEach(item => {
             let {
                 completedQuantity,
-                total
+                total,
             } = data[item]
 
             if (completedQuantity === total) {
                 notice.completedQuantity--
             }
         })
+
         notice.messagelist = notice.messagelist.filter(item => item.title !== title).slice(-(messagesNumber - 1))
         notice.messagelist.push({
-            title: title,
+            href: name,
+            title,
             message: `下载${value}`
         })
 
         const tempList = JSON.parse(JSON.stringify(notice.messagelist))
 
         $('#wah0713 .container .showMessage').html(`
-            <p><span>进行中的下载任务数：</span>${notice.completedQuantity}</p>
+            <p><span>进行中的下载任务数：</span><span class="red">${notice.completedQuantity}</span></p>
             ${tempList.reverse().map(item=>{
-                return `<p><span>${item.title}：</span>${item.message}</p>`
+                return `<p><span>${item.title}：</span><span data-href=${item.href} class="red downloadBtn">${item.message}</span></p>`
             }).join('')}
         `)
     }
@@ -224,53 +220,8 @@
     }
     // 预览图片时，点击图片关闭预览功能
     $('.imgInstance.Viewer_imgElm_2JHWe').on('click', clickEscKey)
-    if (isNew) {
-        // 新版
-        $('.Main_full_1dfQX').on('click', '.woo-box-flex .head-info_info_2AspQ:not(.Feed_retweetHeadInfo_Tl4Ld)', async function (event) {
-            if (event.target.className !== event.currentTarget.className || ![message.noImageError, message.finish, undefined, ''].includes(gettextDom(this))) return false
 
-            const href = $(this).find('.head-info_time_6sFQg').attr('href')
-
-            const writerName = $(this).prev().find('.head_name_24eEB').text().trim()
-            const time = $(this).find('.head-info_time_6sFQg').attr('title').trim() || $(this).find('.head-info_time_6sFQg').text().trim()
-            const title = `${writerName} ${time}`
-
-            data[href] = {
-                name: href,
-                total: null,
-                completedQuantity: 0,
-                message: '',
-                title
-            }
-
-            data[href].message = message.getReady
-            const imgUrlList = await getfileUrlByInfo(this)
-            if (imgUrlList.length <= 0) {
-                // 没有资源
-                data[href].message = message.noImageError
-                delete data[href]
-                return false
-            }
-
-            const promiseList = imgUrlList.map((item, index) => getFileBlob(item, index, () => {
-                data[href].completedQuantity++
-                const total = imgUrlList.length
-                const completedQuantity = data[href].completedQuantity
-
-                const percentage = new Intl.NumberFormat(undefined, {
-                    maximumFractionDigits: 2
-                }).format(completedQuantity / total * 100)
-                data[href].total = total
-                data[href].message = `中${completedQuantity}/ ${total}（${percentage}%）`
-            }))
-            const imageRes = await Promise.all(promiseList)
-
-            await pack(imageRes, title)
-            // 下载成功
-            data[href].message = message.finish
-        })
-
-        $frameContent.prepend(`
+    $frameContent.prepend(`
         <div id="wah0713">
             <div class="container">
                 <div class="showMessage"></div>
@@ -279,146 +230,118 @@
             </div>
         </div>
        `)
-        $('#wah0713 .container .input-box input').change(event => {
-            event.target.value = event.target.value | 0
-            if (event.target.value > max) {
-                event.target.value = max
-            }
-            if (event.target.value < min) {
-                event.target.value = min
-            }
-            messagesNumber = event.target.value
-            GM_setValue('messagesNumber', messagesNumber)
+
+    $('.Main_full_1dfQX').on('click', '.woo-box-flex .head-info_info_2AspQ:not(.Feed_retweetHeadInfo_Tl4Ld)', async function (event) {
+        if (event.target.className !== event.currentTarget.className || ![message.noImageError, message.finish, undefined, ''].includes(gettextDom(this))) return false
+
+        const href = $(this).find('.head-info_time_6sFQg').attr('href')
+
+        const writerName = $(this).prev().find('.head_name_24eEB').text().trim()
+        const time = $(this).find('.head-info_time_6sFQg').attr('title').trim() || $(this).find('.head-info_time_6sFQg').text().trim()
+        const title = `${writerName} ${time}`
+
+        data[href] = {
+            imgUrlList: [],
+            title,
+            name: href,
+            total: 0,
+            completedQuantity: 0,
+            message: '',
+        }
+
+        data[href].message = message.getReady
+        const imgUrlList = await getfileUrlByInfo(this)
+        data[href].imgUrlList = imgUrlList
+
+        main(href, imgUrlList)
+    })
+
+    $('.showMessage').on('click', '.downloadBtn', async function (event) {
+        if (event.target.className !== event.currentTarget.className || ![message.noImageError, message.finish, undefined, ''].includes(gettextDom(this))) return false
+        const href = $(this).data('href')
+
+        data[href].completedQuantity = 0
+        data[href].message = message.getReady
+        main(href, data[href].imgUrlList)
+    })
+
+    $('#wah0713 .container .input-box input').change(event => {
+        event.target.value = event.target.value | 0
+        if (event.target.value > max) {
+            event.target.value = max
+        }
+        if (event.target.value < min) {
+            event.target.value = min
+        }
+        messagesNumber = event.target.value
+        GM_setValue('messagesNumber', messagesNumber)
+    })
+
+    // 获取图片链接
+    async function getfileUrlByInfo(dom) {
+        const idList = []
+        $(dom).parents('.Feed_body_3R0rO').find('.head-info_time_6sFQg').each((index, item) => {
+            const str = $(item).attr('href').match(/(?<=\/)(\w+$)/) && RegExp.$1
+            idList.push(str)
         })
-
-        // 获取图片链接
-        async function getfileUrlByInfo(dom) {
-            const idList = []
-            $(dom).parents('.Feed_body_3R0rO').find('.head-info_time_6sFQg').each((index, item) => {
-                idList.push($(item).attr('href').match(/(?<=\/)\w+$/)[0])
-            })
-            const resList = await Promise.all(idList.map(getInfoById))
-            const urlList = []
-            resList.forEach(item => {
-                if (!item) return false;
-                [...Object.keys(item)].forEach(ele => {
-                    urlList.push(item[ele].largest.url)
-                    if (item[ele].type === 'livephoto') {
-                        urlList.push(item[ele].video)
-                    }
-                })
-            })
-            return urlList
-        }
-
-        const observer = new MutationObserver(() => {
-            $(`.head-info_info_2AspQ`).attr('show-text', '');
-            requestAnimationFrame(() => {
-                [...Object.keys(data)].forEach(item => {
-                    const {
-                        message,
-                    } = data[item]
-                    retextDom($(`.head-info_info_2AspQ:has(>[href="${item}"])`), message)
-                })
-            })
-        });
-        observer.observe($frameContent[0], {
-            childList: true,
-            subtree: true
-        });
-
-    } else {
-        // 旧版
-        if (!$('.Main_full_1dfQX').length) {
-            $('body').on('click', '.WB_detail > .WB_from.S_txt2', async function (event) {
-                if (event.target.className !== event.currentTarget.className || ![message.noImageError, message.finish, undefined, ''].includes(gettextDom(this))) return false
-
-                const href = $(this).find('[node-type="feed_list_item_date"]').attr('href')
-
-                const writerName = $(this).prev().find('.W_f14.W_fb.S_txt1').text().trim()
-                const time = $(this).find('[node-type="feed_list_item_date"]').attr('title').trim() || $(this).find('[node-type="feed_list_item_date"]').text().trim()
-                const title = `${writerName} ${time}`
-
-                data[href] = {
-                    name: href,
-                    total: null,
-                    completedQuantity: 0,
-                    message: '',
-                    title
+        const resList = await Promise.all(idList.map(getInfoById))
+        const urlList = []
+        resList.forEach(item => {
+            if (!item) return false;
+            [...Object.keys(item)].forEach(ele => {
+                urlList.push(item[ele].largest.url)
+                if (item[ele].type === 'livephoto') {
+                    urlList.push(item[ele].video)
                 }
-
-                data[href].message = message.getReady
-                const imgUrlList = await getfileUrlByInfo_old(this)
-                if (imgUrlList.length <= 0) {
-                    // 没有资源
-                    data[href].message = message.noImageError
-                    delete data[href]
-                    return false
-                }
-
-                const promiseList = imgUrlList.map((item, index) => getFileBlob(item, index, () => {
-                    data[href].completedQuantity++
-                    const total = imgUrlList.length
-                    const completedQuantity = data[href].completedQuantity
-
-                    const percentage = new Intl.NumberFormat(undefined, {
-                        maximumFractionDigits: 2
-                    }).format(completedQuantity / total * 100)
-                    data[href].total = total
-                    data[href].message = `中${completedQuantity}/ ${total}（${percentage}%）`
-                }))
-                const imageRes = await Promise.all(promiseList)
-
-                await pack(imageRes, title)
-                // 下载成功
-                data[href].message = message.finish
             })
-        }
-
-        $wbMiniblog.prepend(`
-        <div id="wah0713">
-            <div class="container">
-                <div class="showMessage"></div>
-                <div class="input-box">需要显示的消息条数：<input type="number" max="${max}" min="${min}" value="${messagesNumber}" step=1>
-                </div>
-            </div>
-        </div>
-       `)
-        $('#wah0713 .container .input-box input').change(event => {
-            event.target.value = event.target.value | 0
-            if (event.target.value > max) {
-                event.target.value = max
-            }
-            if (event.target.value < min) {
-                event.target.value = min
-            }
-            messagesNumber = event.target.value
-            GM_setValue('messagesNumber', messagesNumber)
         })
-
-        // 获取图片链接
-        async function getfileUrlByInfo_old(dom) {
-            const idList = []
-            $(dom).parents('.WB_detail').find('[node-type="feed_list_item_date"]').each((index, item) => {
-                idList.push($(item).attr('href').replace(/\?.*$/, '').match(/(?<=\/)\w+$/)[0])
-            })
-            const resList = await Promise.all(idList.map(getInfoById))
-            const urlList = []
-            resList.forEach(item => {
-                if (!item) return false;
-                [...Object.keys(item)].forEach(ele => {
-                    urlList.push(item[ele].largest.url)
-                    if (item[ele].type === 'livephoto') {
-                        urlList.push(item[ele].video)
-                    }
-                })
-            })
-            return urlList
-        }
+        return urlList
     }
 
+    async function main(href, imgUrlList) {
+
+        if (imgUrlList.length <= 0) {
+            // 没有资源
+            data[href].message = message.noImageError
+            return false
+        }
+
+        const promiseList = imgUrlList.map((item, index) => getFileBlob(item, index, () => {
+            data[href].completedQuantity++
+            const total = imgUrlList.length
+            const completedQuantity = data[href].completedQuantity
+
+            const percentage = new Intl.NumberFormat(undefined, {
+                maximumFractionDigits: 2
+            }).format(completedQuantity / total * 100)
+            data[href].total = total
+            data[href].message = `中${completedQuantity}/${total}（${percentage}%）`
+        }))
+        const imageRes = await Promise.all(promiseList)
+
+        await pack(imageRes, data[href].title)
+        // 下载成功
+        data[href].message = message.finish
+    }
+
+    const observer = new MutationObserver(() => {
+        $(`.head-info_info_2AspQ`).attr('show-text', '');
+        requestAnimationFrame(() => {
+            [...Object.keys(data)].forEach(item => {
+                const {
+                    message,
+                } = data[item]
+                retextDom($(`.head-info_info_2AspQ:has(>[href="${item}"])`), message)
+            })
+        })
+    });
+    observer.observe($frameContent[0], {
+        childList: true,
+        subtree: true
+    });
+
     GM_addStyle(`
-    .WB_detail>.WB_from.S_txt2:after,.woo-box-flex .head-info_info_2AspQ:not(.Feed_retweetHeadInfo_Tl4Ld):after{content:"下载" attr(show-text);color:#ff8200;cursor:pointer}.WB_detail>.WB_from.S_txt2:after{float:right}.WB_miniblog_fb #wah0713,.woo-box-flex.Frame_content_3XrxZ #wah0713{font-size:12px;font-weight:700}.WB_miniblog_fb #wah0713 .container,.woo-box-flex.Frame_content_3XrxZ #wah0713 .container{position:fixed;left:0}.WB_miniblog_fb #wah0713:hover .input-box,.woo-box-flex.Frame_content_3XrxZ #wah0713:hover .input-box{display:block}.WB_miniblog_fb #wah0713 input,.woo-box-flex.Frame_content_3XrxZ #wah0713 input{width:3em;color:#d52c2b;border-width:1px;outline:0;background-color:transparent}.WB_miniblog_fb #wah0713 .input-box,.woo-box-flex.Frame_content_3XrxZ #wah0713 .input-box{display:none}.WB_miniblog_fb #wah0713 .showMessage,.woo-box-flex.Frame_content_3XrxZ #wah0713 .showMessage{color:#d52c2b}.WB_miniblog_fb #wah0713 .showMessage>p,.woo-box-flex.Frame_content_3XrxZ #wah0713 .showMessage>p{line-height:16px;margin:4px}.WB_miniblog_fb #wah0713 .showMessage>p span,.woo-box-flex.Frame_content_3XrxZ #wah0713 .showMessage>p span{color:#333}
+    .woo-box-flex .head-info_info_2AspQ:not(.Feed_retweetHeadInfo_Tl4Ld):after{content:"下载" attr(show-text);color:#ff8200;cursor:pointer}.woo-box-flex.Frame_content_3XrxZ #wah0713{font-size:12px;font-weight:700}.woo-box-flex.Frame_content_3XrxZ #wah0713 .container{position:fixed;left:0}.woo-box-flex.Frame_content_3XrxZ #wah0713:hover .input-box{display:block}.woo-box-flex.Frame_content_3XrxZ #wah0713 input{width:3em;color:#d52c2b;border-width:1px;outline:0;background-color:transparent}.woo-box-flex.Frame_content_3XrxZ #wah0713 .input-box{display:none}.woo-box-flex.Frame_content_3XrxZ #wah0713 .showMessage>p{line-height:16px;margin:4px}.woo-box-flex.Frame_content_3XrxZ #wah0713 .showMessage>p span{color:#333}.woo-box-flex.Frame_content_3XrxZ #wah0713 .showMessage>p span.red{color:#d52c2b}.woo-box-flex.Frame_content_3XrxZ #wah0713 .showMessage>p span.red.downloadBtn{cursor:pointer}
     `)
 
     // // debugJS
