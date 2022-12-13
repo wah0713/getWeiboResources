@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         微博一键取图（9宫格）
 // @namespace    https://github.com/wah0713/getWeiboImage
-// @version      1.05
+// @version      1.06
 // @description  一个兴趣使然的脚本，微博一键取图脚本。
 // @supportURL   https://github.com/wah0713/getWeiboImage/issues
 // @updateURL    https://greasyfork.org/scripts/454816-%E5%BE%AE%E5%8D%9A%E4%B8%80%E9%94%AE%E5%8F%96%E5%9B%BE-9%E5%AE%AB%E6%A0%BC/code/%E5%BE%AE%E5%8D%9A%E4%B8%80%E9%94%AE%E5%8F%96%E5%9B%BE%EF%BC%889%E5%AE%AB%E6%A0%BC%EF%BC%89.user.js
