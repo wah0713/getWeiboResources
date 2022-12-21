@@ -16,6 +16,8 @@
 </pre>
 </details>
 
+### [关于下载视频的方法👈](https://greasyfork.org/zh-CN/scripts/454816-%E5%BE%AE%E5%8D%9A%E4%B8%80%E9%94%AE%E5%8F%96%E5%9B%BE-9%E5%AE%AB%E6%A0%BC/discussions/160492)
+
 ### 当前版本1.06效果图：
 
 <pre>
@@ -41,5 +43,5 @@
 
 这个脚本是工作之余，自己<del>低级程序员</del>练练手，所以也不要有太多期待。
 <!-- weibo/wb -->
-[1.05]:https://img-blog.csdnimg.cn/d1c6d2ef67394d5ca65836e05c7e24c9.png
-[1.06]:https://img-blog.csdnimg.cn/b98d830522d34b8a8b8b9180699d314d.png
+[1.05]:https://img-blog.csdnimg.cn/7433d2fef0544eddb60ae10ef2977f45.png
+[1.06]:https://img-blog.csdnimg.cn/a055f6a1160d42b6a74f97c49b7d274f.png
