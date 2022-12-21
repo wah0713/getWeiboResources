@@ -45,11 +45,13 @@
     const max = 40
     const min = 3
 
+    // 左侧通知
     const notice = {
         completedQuantity: 0,
         messagelist: []
     }
 
+    // 递归proxy
     function reactive(data, callBack) {
         return new Proxy(data, {
             set(target, propKey, value, receiver) {
@@ -61,11 +63,13 @@
             }
         })
     }
+
     const data = reactive({}, (target, propKey, value, receiver) => {
         const {
             name,
         } = target
         if (propKey === 'message') {
+            // 数据变化更新消息
             retextDom($(`.head-info_info_2AspQ:has(>[href="${name}"])`), value)
             handleMessage(target, value)
         }
@@ -104,6 +108,27 @@
                 return `<p><span>${item.title}：</span><span data-href=${item.href} class="red downloadBtn">${item.message}</span></p>`
             }).join('')}
         `)
+    }
+
+    // 获取图片链接
+    async function getfileUrlByInfo(dom) {
+        const idList = []
+        $(dom).parents('.Feed_body_3R0rO').find('.head-info_time_6sFQg').each((index, item) => {
+            const str = $(item).attr('href').match(/(?<=\/)(\w+$)/) && RegExp.$1
+            idList.push(str)
+        })
+        const resList = await Promise.all(idList.map(getInfoById))
+        const urlList = []
+        resList.forEach(item => {
+            if (!item) return false;
+            [...Object.keys(item)].forEach(ele => {
+                urlList.push(item[ele].largest.url)
+                if (item[ele].type === 'livephoto') {
+                    urlList.push(item[ele].video)
+                }
+            })
+        })
+        return urlList
     }
 
     // 打包
@@ -184,16 +209,37 @@
         })
     }
 
+
+    async function main(href, imgUrlList) {
+
+        if (imgUrlList.length <= 0) {
+            // 没有资源
+            data[href].message = message.noImageError
+            return false
+        }
+
+        const promiseList = imgUrlList.map((item, index) => getFileBlob(item, index, () => {
+            data[href].completedQuantity++
+            const total = imgUrlList.length
+            const completedQuantity = data[href].completedQuantity
+
+            const percentage = new Intl.NumberFormat(undefined, {
+                maximumFractionDigits: 2
+            }).format(completedQuantity / total * 100)
+            data[href].total = total
+            data[href].message = `中${completedQuantity}/${total}（${percentage}%）`
+        }))
+        const imageRes = await Promise.all(promiseList)
+
+        await pack(imageRes, data[href].title)
+        // 下载成功
+        data[href].message = message.finish
+    }
+
     // dom修改文本
-    function retextDom(dom, text, timer) {
+    function retextDom(dom, text) {
         const $dom = $(dom)
         $dom.attr('show-text', text)
-        if (timer) {
-            timerObject[timer] && clearTimeout(timerObject[timer])
-            timerObject[timer] = setTimeout(() => {
-                $(`[href='${timer}']`).parent().attr('show-text', '')
-            }, 2000)
-        }
     }
 
     // 获取dom文本
@@ -276,53 +322,6 @@
         messagesNumber = event.target.value
         GM_setValue('messagesNumber', messagesNumber)
     })
-
-    // 获取图片链接
-    async function getfileUrlByInfo(dom) {
-        const idList = []
-        $(dom).parents('.Feed_body_3R0rO').find('.head-info_time_6sFQg').each((index, item) => {
-            const str = $(item).attr('href').match(/(?<=\/)(\w+$)/) && RegExp.$1
-            idList.push(str)
-        })
-        const resList = await Promise.all(idList.map(getInfoById))
-        const urlList = []
-        resList.forEach(item => {
-            if (!item) return false;
-            [...Object.keys(item)].forEach(ele => {
-                urlList.push(item[ele].largest.url)
-                if (item[ele].type === 'livephoto') {
-                    urlList.push(item[ele].video)
-                }
-            })
-        })
-        return urlList
-    }
-
-    async function main(href, imgUrlList) {
-
-        if (imgUrlList.length <= 0) {
-            // 没有资源
-            data[href].message = message.noImageError
-            return false
-        }
-
-        const promiseList = imgUrlList.map((item, index) => getFileBlob(item, index, () => {
-            data[href].completedQuantity++
-            const total = imgUrlList.length
-            const completedQuantity = data[href].completedQuantity
-
-            const percentage = new Intl.NumberFormat(undefined, {
-                maximumFractionDigits: 2
-            }).format(completedQuantity / total * 100)
-            data[href].total = total
-            data[href].message = `中${completedQuantity}/${total}（${percentage}%）`
-        }))
-        const imageRes = await Promise.all(promiseList)
-
-        await pack(imageRes, data[href].title)
-        // 下载成功
-        data[href].message = message.finish
-    }
 
     const observer = new MutationObserver(() => {
         $(`.head-info_info_2AspQ`).attr('show-text', '');
