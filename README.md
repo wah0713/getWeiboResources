@@ -10,13 +10,15 @@
 6、<del>兼容旧版（1.03）</del>
 5、新版全屏预览图片时，再次点击图片退出全屏预览(1.03)
 4、支持下载live图（1.02）
-3、不支持下载视频（1.01）
+3、不支持下载视频（1.01）<a href="https://greasyfork.org/zh-CN/scripts/454816-%E5%BE%AE%E5%8D%9A%E4%B8%80%E9%94%AE%E5%8F%96%E5%9B%BE-9%E5%AE%AB%E6%A0%BC/discussions/160492">关于下载视频的方法👈</a>
 2、支持最多18图下载（1.01）
 1、下载图片（1.01）
 </pre>
 </details>
 
+
 ### [关于下载视频的方法👈](https://greasyfork.org/zh-CN/scripts/454816-%E5%BE%AE%E5%8D%9A%E4%B8%80%E9%94%AE%E5%8F%96%E5%9B%BE-9%E5%AE%AB%E6%A0%BC/discussions/160492)
+
 
 ### 当前版本1.06效果图：
 
