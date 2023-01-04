@@ -11,6 +11,7 @@
 // @icon         https://weibo.com/favicon.ico
 // @require      https://cdn.bootcss.com/jquery/1.12.4/jquery.min.js
 // @require      https://cdn.bootcss.com/jszip/3.1.5/jszip.min.js
+// @require      https://cdn.bootcss.com/dayjs/1.11.7/dayjs.min.js
 // @match        *://weibo.com/*
 // @match        *://*.weibo.com/*
 // @match        *://t.cn/*
@@ -112,23 +113,27 @@
 
     // 获取图片链接
     async function getfileUrlByInfo(dom) {
-        const idList = []
-        $(dom).parents('.Feed_body_3R0rO').find('.head-info_time_6sFQg').each((index, item) => {
-            const str = $(item).attr('href').match(/(?<=\/)(\w+$)/) && RegExp.$1
-            idList.push(str)
+        const id = $(dom).children('a').attr('href').match(/(?<=\/)(\w+$)/) && RegExp.$1
+        const {
+            pic_infos,
+            created_at,
+            user: {
+                screen_name
+            }
+        } = await getInfoById(id)
+        const time = dayjs(created_at).format('YYYY-MM-DD HH_mm')
+        const urlList = [];
+        [...Object.keys(pic_infos)].forEach(ele => {
+            urlList.push(pic_infos[ele].largest.url)
+            if (pic_infos[ele].type === 'livephoto') {
+                urlList.push(pic_infos[ele].video)
+            }
         })
-        const resList = await Promise.all(idList.map(getInfoById))
-        const urlList = []
-        resList.forEach(item => {
-            if (!item) return false;
-            [...Object.keys(item)].forEach(ele => {
-                urlList.push(item[ele].largest.url)
-                if (item[ele].type === 'livephoto') {
-                    urlList.push(item[ele].video)
-                }
-            })
-        })
-        return urlList
+        return {
+            urlList,
+            time,
+            userName: screen_name
+        }
     }
 
     // 打包
@@ -196,7 +201,13 @@
                 onload: (res) => {
                     isDebug && console.log(`getInfoById-onload`, res)
                     try {
-                        resolve(res.response.pic_infos)
+                        const response = res.response
+                        // retweeted_status 为转发
+                        if (res.response.retweeted_status) {
+                            response.pic_infos = res.response.retweeted_status.pic_infos
+                        }
+
+                        resolve(response)
                     } catch (error) {
                         resolve(null)
                     }
@@ -210,17 +221,17 @@
     }
 
 
-    async function main(href, imgUrlList) {
+    async function main(href, urlList) {
 
-        if (imgUrlList.length <= 0) {
+        if (urlList.length <= 0) {
             // 没有资源
             data[href].message = message.noImageError
             return false
         }
 
-        const promiseList = imgUrlList.map((item, index) => getFileBlob(item, index, () => {
+        const promiseList = urlList.map((item, index) => getFileBlob(item, index, () => {
             data[href].completedQuantity++
-            const total = imgUrlList.length
+            const total = urlList.length
             const completedQuantity = data[href].completedQuantity
 
             const percentage = new Intl.NumberFormat(undefined, {
@@ -281,25 +292,22 @@
         if (event.target.className !== event.currentTarget.className || ![message.noImageError, message.finish, undefined, ''].includes(gettextDom(this))) return false
 
         const href = $(this).find('.head-info_time_6sFQg').attr('href')
-
-        const writerName = $(this).prev().find('.head_name_24eEB').text().trim()
-        const time = $(this).find('.head-info_time_6sFQg').attr('title').trim() || $(this).find('.head-info_time_6sFQg').text().trim()
-        const title = `${writerName} ${time}`
+        const {
+            urlList,
+            time,
+            userName
+        } = await getfileUrlByInfo(this)
 
         data[href] = {
-            imgUrlList: [],
-            title,
+            urlList,
+            title: `${userName} ${time}`,
             name: href,
             total: 0,
             completedQuantity: 0,
-            message: '',
+            message: message.getReady,
         }
 
-        data[href].message = message.getReady
-        const imgUrlList = await getfileUrlByInfo(this)
-        data[href].imgUrlList = imgUrlList
-
-        main(href, imgUrlList)
+        main(href, urlList)
     })
 
     $('.showMessage').on('click', '.downloadBtn', async function (event) {
@@ -308,7 +316,7 @@
 
         data[href].completedQuantity = 0
         data[href].message = message.getReady
-        main(href, data[href].imgUrlList)
+        main(href, data[href].urlList)
     })
 
     $('#wah0713 .container .input-box input').change(event => {
