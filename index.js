@@ -153,10 +153,28 @@
         }
     }
 
+
+    // 判断为空文件
+    function isEmptyFile(res) {
+        const {
+            finalUrl,
+            _blob: {
+                type
+            }
+        } = res
+        if (finalUrl.endsWith('gif#101') && type === "image/gif") {
+            return true
+        }
+        return false
+    }
+
     // 打包
     function pack(imageRes, modification) {
         const zip = new JSZip();
         imageRes.forEach(function (obj) {
+            // 打包时过滤空文件
+            if (isEmptyFile(obj)) return false
+
             const suffixName = new URL(obj.finalUrl).pathname.match(/\.\w+$/)[0]
             const name = `${modification}-part${getTwoDigitsNumber(String(obj._id))}${suffixName}`
             zip.file(name, obj._blob);
