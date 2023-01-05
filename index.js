@@ -11,7 +11,6 @@
 // @icon         https://weibo.com/favicon.ico
 // @require      https://cdn.bootcss.com/jquery/1.12.4/jquery.min.js
 // @require      https://cdn.bootcss.com/jszip/3.1.5/jszip.min.js
-// @require      https://cdn.bootcss.com/dayjs/1.11.7/dayjs.min.js
 // @match        *://weibo.com/*
 // @match        *://*.weibo.com/*
 // @match        *://t.cn/*
@@ -33,8 +32,6 @@
 
     // 是否开启dubug模式
     let isDebug = false
-    // 定时器集合
-    const timerObject = {}
     // 消息
     const message = {
         getReady: '准备中',
@@ -81,6 +78,11 @@
             name,
             title
         } = target
+
+        if (title === '') {
+            return false
+        }
+
         const list = [...Object.keys(data)]
         notice.completedQuantity = list.length;
         list.forEach(item => {
@@ -111,6 +113,11 @@
         `)
     }
 
+
+    function getTwoDigitsNumber(number) {
+        return String(number).padStart(2, '0')
+    }
+
     // 获取图片链接
     async function getfileUrlByInfo(dom) {
         const id = $(dom).children('a').attr('href').match(/(?<=\/)(\w+$)/) && RegExp.$1
@@ -121,14 +128,24 @@
                 screen_name
             }
         } = await getInfoById(id)
-        const time = dayjs(created_at).format('YYYY-MM-DD HH_mm')
+
+        const date = new Date(created_at)
+        const Y = date.getFullYear()
+        const M = getTwoDigitsNumber(date.getMonth() + 1)
+        const D = getTwoDigitsNumber(date.getDate())
+        const H = getTwoDigitsNumber(date.getHours())
+        const m = getTwoDigitsNumber(date.getMinutes())
+        const time = `${Y}-${M}-${D} ${H}_${m}`
+
         const urlList = [];
-        [...Object.keys(pic_infos)].forEach(ele => {
+
+        pic_infos && [...Object.keys(pic_infos)].forEach(ele => {
             urlList.push(pic_infos[ele].largest.url)
             if (pic_infos[ele].type === 'livephoto') {
                 urlList.push(pic_infos[ele].video)
             }
         })
+
         return {
             urlList,
             time,
@@ -141,7 +158,7 @@
         const zip = new JSZip();
         imageRes.forEach(function (obj) {
             const suffixName = new URL(obj.finalUrl).pathname.match(/\.\w+$/)[0]
-            const name = `${modification}-part${String(obj._id).padStart(2,'0')}${suffixName}`
+            const name = `${modification}-part${getTwoDigitsNumber(String(obj._id))}${suffixName}`
             zip.file(name, obj._blob);
         });
         return new Promise((resolve, rejcet) => {
@@ -292,20 +309,24 @@
         if (event.target.className !== event.currentTarget.className || ![message.noImageError, message.finish, undefined, ''].includes(gettextDom(this))) return false
 
         const href = $(this).find('.head-info_time_6sFQg').attr('href')
+
+        data[href] = {
+            urlList: [],
+            title: '',
+            name: href,
+            total: 0,
+            completedQuantity: 0,
+            message: message.getReady,
+        }
+
         const {
             urlList,
             time,
             userName
         } = await getfileUrlByInfo(this)
 
-        data[href] = {
-            urlList,
-            title: `${userName} ${time}`,
-            name: href,
-            total: 0,
-            completedQuantity: 0,
-            message: message.getReady,
-        }
+        data[href].title = `${userName} ${time}`
+        data[href].urlList = urlList
 
         main(href, urlList)
     })
