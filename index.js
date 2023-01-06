@@ -16,6 +16,12 @@
 // @match        *://t.cn/*
 // @connect      sinaimg.cn
 // @connect      weibo.com
+// @connect      weibocdn.com
+// @connect      miaopai.com
+// @connect      video.qq.com
+// @connect      youku.com
+// @connect      weibo.com
+// @connect      cibntv.net
 // @noframes     true
 // @run-at       document-idle
 // @grant        GM_addStyle
@@ -35,7 +41,7 @@
     // 消息
     const message = {
         getReady: '准备中',
-        noImageError: '失败，未找到图片资源',
+        noImageError: '失败，未找到资源',
         finish: '完成'
     }
     // 左边显示的消息数
@@ -123,6 +129,7 @@
     async function getfileUrlByInfo(dom) {
         const id = $(dom).children('a').attr('href').match(/(?<=\/)(\w+$)/) && RegExp.$1
         const {
+            topMedia,
             pic_infos,
             created_at,
             user: {
@@ -140,6 +147,7 @@
 
         const urlData = {};
 
+        // 图片
         pic_infos && [...Object.keys(pic_infos)].forEach((ele, index) => {
             urlData[getTwoDigitsNumber(index + 1)] = pic_infos[ele].largest.url
 
@@ -147,6 +155,11 @@
                 urlData[`${getTwoDigitsNumber(index + 1)}_live`] = pic_infos[ele].video
             }
         })
+
+        // 视频
+        if (topMedia) {
+            urlData.media = topMedia
+        }
 
         return {
             urlData,
@@ -156,15 +169,9 @@
     }
 
 
-    // 判断为空文件
+    // 判断为空图片
     function isEmptyFile(res) {
-        const {
-            finalUrl,
-            _blob: {
-                type
-            }
-        } = res
-        if (finalUrl.endsWith('gif#101') && type === "image/gif") {
+        if (res.finalUrl.endsWith('gif#101')) {
             return true
         }
         return false
@@ -177,8 +184,8 @@
             // 打包时过滤空文件
             if (isEmptyFile(obj)) return false
 
-            const suffixName = new URL(obj.finalUrl).pathname.match(/\.\w+$/)[0]
-            const name = `${modification}-part${obj._name}${suffixName}`
+            const suffixName = new URL(obj.finalUrl).pathname.match(/\.(\w+)$/) && RegExp.$1
+            const name = `${modification}-part${obj._name}.${suffixName}`
             zip.file(name, obj._blob);
         });
         return new Promise((resolve, rejcet) => {
@@ -237,17 +244,27 @@
                 responseType: 'json',
                 onload: (res) => {
                     isDebug && console.log(`getInfoById-onload`, res)
+                    const response = res.response
+                    response.topMedia = ''
                     try {
-                        const response = res.response
                         // retweeted_status 为转发
                         if (res.response.retweeted_status) {
-                            response.pic_infos = res.response.retweeted_status.pic_infos
+                            if (res.response.retweeted_status.page_info) {
+                                response.topMedia = res.response.retweeted_status.page_info.media_info.playback_list[0].play_info.url
+                            }
+                            if (res.response.retweeted_status.pic_infos) {
+                                response.pic_infos = res.response.retweeted_status.pic_infos
+                            }
+                        } else {
+                            if (res.response.page_info) {
+                                response.topMedia = res.response.page_info.media_info.playback_list[0].play_info.url
+                            }
+                            if (res.response.pic_infos) {
+                                response.pic_infos = res.response.pic_infos
+                            }
                         }
-
-                        resolve(response)
-                    } catch (error) {
-                        resolve(null)
-                    }
+                    } catch (error) {}
+                    resolve(response)
                 },
                 onerror: (res) => {
                     isDebug && console.log(`getInfoById-onerror`, res)
@@ -259,7 +276,7 @@
 
 
     async function main(href, urlData) {
-        const urlArr = Object.keys(urlData)
+        const urlArr = Object.keys(urlData);
         if (urlArr.length <= 0) {
             // 没有资源
             data[href].message = message.noImageError
@@ -268,7 +285,6 @@
 
         const total = urlArr.length
         data[href].total = total
-
         const promiseList = urlArr.map((item) => getFileBlob(urlData[item], item, () => {
             data[href].completedQuantity++
             const completedQuantity = data[href].completedQuantity
@@ -280,7 +296,13 @@
         }))
         const imageRes = await Promise.all(promiseList)
 
-        await pack(imageRes, data[href].title)
+        // 下载视频
+        if (urlArr.length === 1 && urlArr[0] === 'media') {
+            const suffixName = new URL(urlData.media).pathname.match(/\.(\w+)$/) && RegExp.$1 || 'mp4'
+            download(URL.createObjectURL(imageRes[0]._blob), `${data[href].title}.${suffixName}`)
+        } else {
+            await pack(imageRes, data[href].title)
+        }
         // 下载成功
         data[href].message = message.finish
     }
