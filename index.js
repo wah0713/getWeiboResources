@@ -79,6 +79,7 @@
             title
         } = target
 
+        // title为空，即未初始化
         if (title === '') {
             return false
         }
@@ -137,17 +138,18 @@
         const m = getTwoDigitsNumber(date.getMinutes())
         const time = `${Y}-${M}-${D} ${H}_${m}`
 
-        const urlList = [];
+        const urlData = {};
 
-        pic_infos && [...Object.keys(pic_infos)].forEach(ele => {
-            urlList.push(pic_infos[ele].largest.url)
+        pic_infos && [...Object.keys(pic_infos)].forEach((ele, index) => {
+            urlData[getTwoDigitsNumber(index + 1)] = pic_infos[ele].largest.url
+
             if (pic_infos[ele].type === 'livephoto') {
-                urlList.push(pic_infos[ele].video)
+                urlData[`${getTwoDigitsNumber(index + 1)}_live`] = pic_infos[ele].video
             }
         })
 
         return {
-            urlList,
+            urlData,
             time,
             userName: screen_name
         }
@@ -176,7 +178,7 @@
             if (isEmptyFile(obj)) return false
 
             const suffixName = new URL(obj.finalUrl).pathname.match(/\.\w+$/)[0]
-            const name = `${modification}-part${getTwoDigitsNumber(String(obj._id))}${suffixName}`
+            const name = `${modification}-part${obj._name}${suffixName}`
             zip.file(name, obj._blob);
         });
         return new Promise((resolve, rejcet) => {
@@ -200,7 +202,7 @@
     }
 
     // 下载
-    function getFileBlob(url, index, callback) {
+    function getFileBlob(url, _name, callback) {
         return new Promise((resolve, rejcet) => {
             GM_xmlhttpRequest({
                 url,
@@ -216,7 +218,7 @@
                     resolve({
                         ...res,
                         _blob: res.response,
-                        _id: index + 1
+                        _name
                     })
                 },
                 onerror: (res) => {
@@ -256,23 +258,24 @@
     }
 
 
-    async function main(href, urlList) {
-
-        if (urlList.length <= 0) {
+    async function main(href, urlData) {
+        const urlArr = Object.keys(urlData)
+        if (urlArr.length <= 0) {
             // 没有资源
             data[href].message = message.noImageError
             return false
         }
 
-        const promiseList = urlList.map((item, index) => getFileBlob(item, index, () => {
+        const total = urlArr.length
+        data[href].total = total
+
+        const promiseList = urlArr.map((item) => getFileBlob(urlData[item], item, () => {
             data[href].completedQuantity++
-            const total = urlList.length
             const completedQuantity = data[href].completedQuantity
 
             const percentage = new Intl.NumberFormat(undefined, {
                 maximumFractionDigits: 2
             }).format(completedQuantity / total * 100)
-            data[href].total = total
             data[href].message = `中${completedQuantity}/${total}（${percentage}%）`
         }))
         const imageRes = await Promise.all(promiseList)
@@ -329,7 +332,7 @@
         const href = $(this).find('.head-info_time_6sFQg').attr('href')
 
         data[href] = {
-            urlList: [],
+            urlData: {},
             title: '',
             name: href,
             total: 0,
@@ -338,15 +341,15 @@
         }
 
         const {
-            urlList,
+            urlData,
             time,
             userName
         } = await getfileUrlByInfo(this)
 
         data[href].title = `${userName} ${time}`
-        data[href].urlList = urlList
+        data[href].urlData = urlData
 
-        main(href, urlList)
+        main(href, urlData)
     })
 
     $('.showMessage').on('click', '.downloadBtn', async function (event) {
@@ -355,7 +358,7 @@
 
         data[href].completedQuantity = 0
         data[href].message = message.getReady
-        main(href, data[href].urlList)
+        main(href, data[href].urlData)
     })
 
     $('#wah0713 .container .input-box input').change(event => {
@@ -390,8 +393,8 @@
     .woo-box-flex .head-info_info_2AspQ:not(.Feed_retweetHeadInfo_Tl4Ld):after{content:"下载" attr(show-text);color:#ff8200;cursor:pointer}.woo-box-flex.Frame_content_3XrxZ #wah0713{font-size:12px;font-weight:700}.woo-box-flex.Frame_content_3XrxZ #wah0713 .container{position:fixed;left:0}.woo-box-flex.Frame_content_3XrxZ #wah0713:hover .input-box{display:block}.woo-box-flex.Frame_content_3XrxZ #wah0713 input{width:3em;color:#d52c2b;border-width:1px;outline:0;background-color:transparent}.woo-box-flex.Frame_content_3XrxZ #wah0713 .input-box{display:none}.woo-box-flex.Frame_content_3XrxZ #wah0713 .showMessage>p{line-height:16px;margin:4px}.woo-box-flex.Frame_content_3XrxZ #wah0713 .showMessage>p span{color:#333}.woo-box-flex.Frame_content_3XrxZ #wah0713 .showMessage>p span.red{color:#d52c2b}.woo-box-flex.Frame_content_3XrxZ #wah0713 .showMessage>p span.red.downloadBtn{cursor:pointer}
     `)
 
-    // // debugJS
-    // isDebug = true
-    // unsafeWindow.$ = $
-    // setTimeout(() => {}, 5 * 1000);
+    // debugJS
+    isDebug = true
+    unsafeWindow.$ = $
+    setTimeout(() => {}, 5 * 1000);
 })()
