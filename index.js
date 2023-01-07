@@ -140,7 +140,7 @@
         const D = formatNumber(date.getDate())
         const H = formatNumber(date.getHours())
         const m = formatNumber(date.getMinutes())
-        const time = `${Y}-${M}-${D} ${H}_${m}`
+        const time = `${Y}-${M}-${D} ${H}:${m}`
 
         const urlData = {};
 
