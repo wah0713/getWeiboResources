@@ -1,8 +1,8 @@
 // ==UserScript==
-// @name         微博一键取图（9宫格）
+// @name         微博一键下载（9宫格&&视频）
 // @namespace    https://github.com/wah0713/getWeiboImage
-// @version      1.06
-// @description  一个兴趣使然的脚本，微博一键取图脚本。
+// @version      1.07
+// @description  一个兴趣使然的脚本，微博一键下载脚本。
 // @supportURL   https://github.com/wah0713/getWeiboImage/issues
 // @updateURL    https://greasyfork.org/scripts/454816-%E5%BE%AE%E5%8D%9A%E4%B8%80%E9%94%AE%E5%8F%96%E5%9B%BE-9%E5%AE%AB%E6%A0%BC/code/%E5%BE%AE%E5%8D%9A%E4%B8%80%E9%94%AE%E5%8F%96%E5%9B%BE%EF%BC%889%E5%AE%AB%E6%A0%BC%EF%BC%89.user.js
 // @author       wah0713
@@ -18,10 +18,11 @@
 // @connect      weibo.com
 // @connect      weibocdn.com
 // @connect      miaopai.com
-// @connect      video.qq.com
+// @connect      qq.com
 // @connect      youku.com
 // @connect      weibo.com
 // @connect      cibntv.net
+// @connect      *
 // @noframes     true
 // @run-at       document-idle
 // @grant        GM_addStyle
@@ -41,7 +42,8 @@
     // 消息
     const message = {
         getReady: '准备中',
-        noEmptyError: '失败，未找到资源',
+        isEmptyError: '失败，未找到资源',
+        isUnkownError: '失败，未知错误',
         finish: '完成'
     }
     // 左边显示的消息数
@@ -182,14 +184,11 @@
             const name = `${modification}-part${obj._name}.${suffixName}`
             zip.file(name, obj._blob);
         });
-        return new Promise((resolve, rejcet) => {
+        return new Promise(async (resolve, rejcet) => {
             // 生成zip文件并下载
-            zip.generateAsync({
+            resolve(await zip.generateAsync({
                 type: 'blob'
-            }).then((content) => {
-                download(URL.createObjectURL(content), `${modification}.zip`)
-                resolve(true)
-            })
+            }))
         })
     }
 
@@ -247,14 +246,14 @@
                         // retweeted_status 为转发
                         if (res.response.retweeted_status) {
                             if (res.response.retweeted_status.page_info) {
-                                response.topMedia = res.response.retweeted_status.page_info.media_info.playback_list[0].play_info.url
+                                response.topMedia = get(res.response.retweeted_status, 'page_info.media_info.playback_list[0].play_info.url', get(res.response.retweeted_status, 'page_info.media_info.stream_url', ''))
                             }
                             if (res.response.retweeted_status.pic_infos) {
                                 response.pic_infos = res.response.retweeted_status.pic_infos
                             }
                         } else {
                             if (res.response.page_info) {
-                                response.topMedia = res.response.page_info.media_info.playback_list[0].play_info.url
+                                response.topMedia = get(res.response, 'page_info.media_info.playback_list[0].play_info.url', get(res.response, 'page_info.media_info.stream_url', ''))
                             }
                             if (res.response.pic_infos) {
                                 response.pic_infos = res.response.pic_infos
@@ -288,8 +287,16 @@
                 data[href].message = `中${formatNumber(completedQuantity / 1024/ 1024)}/${formatNumber(total / 1024/ 1024)}M（${formatNumber(percentage)}%）`
             }
         })
-        const suffixName = new URL(urlData.media).pathname.match(/\.(\w+)$/) && RegExp.$1 || 'mp4'
-        download(URL.createObjectURL(mediaRes._blob), `${data[href].title}.${suffixName}`)
+        let suffixName = new URL(urlData.media).pathname.match(/\.(\w+)$/) && RegExp.$1
+        if (['json', null].includes(suffixName)) {
+            suffixName = 'mp4'
+        }
+
+        if (mediaRes._blob) {
+            download(URL.createObjectURL(mediaRes._blob), `${data[href].title}.${suffixName}`)
+            return true
+        }
+        return false
     }
 
     // 下载图片（默认）
@@ -309,7 +316,9 @@
         }))
         const imageRes = await Promise.all(promiseList)
 
-        await pack(imageRes, data[href].title)
+        const content = await pack(imageRes, data[href].title)
+        download(URL.createObjectURL(content), `${data[href].title}.zip`)
+        return true
     }
 
     // 数字格式化
@@ -330,23 +339,51 @@
         return $(dom).attr('show-text')
     }
 
+    /**
+     * object: 对象
+     * path: 输入的路径
+     * defaultVal: 默认值
+     * url: https://blog.csdn.net/RedaTao/article/details/108119230
+     **/
+    function get(object, path, defaultVal = undefined) {
+        // 先将path处理成统一格式
+        let newPath = [];
+        if (Array.isArray(path)) {
+            newPath = path;
+        } else {
+            // 先将字符串中的'['、']'去除替换为'.'，split分割成数组形式
+            newPath = path.replace(/\[/g, '.').replace(/\]/g, '').split('.');
+        }
+
+        // 递归处理，返回最后结果
+        return newPath.reduce((o, k) => {
+            return (o || {})[k]
+        }, object) || defaultVal;
+    }
+
     async function main(href, urlData) {
         const urlArr = Object.keys(urlData);
         if (urlArr.length <= 0) {
             // 没有资源
-            data[href].message = message.noEmptyError
+            data[href].message = message.isEmptyError
             return false
         }
 
+        let = isSuccess = true
         if (urlArr.length === 1 && urlArr[0] === 'media') {
             // 下载视频
-            await DownLoadMedia(href, urlData)
+            isSuccess = await DownLoadMedia(href, urlData)
         } else {
             // 下载图片（默认）
-            await DownLoadImage(href, urlData, urlArr)
+            isSuccess = await DownLoadImage(href, urlData, urlArr)
         }
-        // 下载成功
-        data[href].message = message.finish
+        if (isSuccess) {
+            // 下载成功
+            data[href].message = message.finish
+        } else {
+            // 下载失败
+            data[href].message = message.isUnkownError
+        }
     }
 
     // 模拟esc
@@ -380,7 +417,7 @@
        `)
 
     $('.Main_full_1dfQX').on('click', '.woo-box-flex .head-info_info_2AspQ:not(.Feed_retweetHeadInfo_Tl4Ld)', async function (event) {
-        if (event.target.className !== event.currentTarget.className || ![message.noEmptyError, message.finish, undefined, ''].includes(gettextDom(this))) return false
+        if (event.target.className !== event.currentTarget.className || ![message.isEmptyError, message.finish, undefined, ''].includes(gettextDom(this))) return false
 
         const href = $(this).find('.head-info_time_6sFQg').attr('href')
 
@@ -407,7 +444,7 @@
     })
 
     $('.showMessage').on('click', '.downloadBtn', async function (event) {
-        if (event.target.className !== event.currentTarget.className || ![message.noEmptyError, message.finish, undefined, ''].includes(gettextDom(this))) return false
+        if (event.target.className !== event.currentTarget.className || ![message.isEmptyError, message.finish, undefined, ''].includes(gettextDom(this))) return false
         const href = $(this).data('href')
 
         data[href].completedQuantity = 0
