@@ -10,6 +10,7 @@
 .woo-box-flex.Frame_content_3XrxZ #wah0713 .container {
   position: fixed;
   left: 0;
+  z-index: 1;
 }
 .woo-box-flex.Frame_content_3XrxZ #wah0713:hover .input-box {
   display: block;

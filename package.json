@@ -4,7 +4,7 @@
   "description": "斗鱼插件",
   "private": true,
   "scripts": {
-    "bundle": "webpack"
+    "bundle": "SET NODE_OPTIONS=--openssl-legacy-provider && webpack"
   },
   "repository": {
     "type": "git",
