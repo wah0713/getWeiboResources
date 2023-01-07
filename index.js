@@ -41,7 +41,7 @@
     // 消息
     const message = {
         getReady: '准备中',
-        noImageError: '失败，未找到资源',
+        noEmptyError: '失败，未找到资源',
         finish: '完成'
     }
     // 左边显示的消息数
@@ -120,11 +120,6 @@
         `)
     }
 
-
-    function getTwoDigitsNumber(number) {
-        return String(number).padStart(2, '0')
-    }
-
     // 获取图片链接
     async function getfileUrlByInfo(dom) {
         const id = $(dom).children('a').attr('href').match(/(?<=\/)(\w+$)/) && RegExp.$1
@@ -139,20 +134,20 @@
 
         const date = new Date(created_at)
         const Y = date.getFullYear()
-        const M = getTwoDigitsNumber(date.getMonth() + 1)
-        const D = getTwoDigitsNumber(date.getDate())
-        const H = getTwoDigitsNumber(date.getHours())
-        const m = getTwoDigitsNumber(date.getMinutes())
+        const M = formatNumber(date.getMonth() + 1)
+        const D = formatNumber(date.getDate())
+        const H = formatNumber(date.getHours())
+        const m = formatNumber(date.getMinutes())
         const time = `${Y}-${M}-${D} ${H}_${m}`
 
         const urlData = {};
 
         // 图片
         pic_infos && [...Object.keys(pic_infos)].forEach((ele, index) => {
-            urlData[getTwoDigitsNumber(index + 1)] = pic_infos[ele].largest.url
+            urlData[formatNumber(index + 1)] = pic_infos[ele].largest.url
 
             if (pic_infos[ele].type === 'livephoto') {
-                urlData[`${getTwoDigitsNumber(index + 1)}_live`] = pic_infos[ele].video
+                urlData[`${formatNumber(index + 1)}_live`] = pic_infos[ele].video
             }
         })
 
@@ -167,7 +162,6 @@
             userName: screen_name
         }
     }
-
 
     // 判断为空图片
     function isEmptyFile(res) {
@@ -208,8 +202,8 @@
         a.remove()
     }
 
-    // 下载
-    function getFileBlob(url, _name, callback) {
+    // 下载流
+    function getFileBlob(url, _name, options) {
         return new Promise((resolve, rejcet) => {
             GM_xmlhttpRequest({
                 url,
@@ -221,7 +215,7 @@
                 },
                 onload: (res) => {
                     isDebug && console.log(`getFileBlob-onload`, res)
-                    callback()
+                    options.callback && options.callback()
                     resolve({
                         ...res,
                         _blob: res.response,
@@ -231,6 +225,9 @@
                 onerror: (res) => {
                     isDebug && console.log(`getFileBlob-onerror`, res)
                     resolve(null)
+                },
+                onprogress: (res) => {
+                    options.onprogress && options.onprogress(res)
                 }
             })
         })
@@ -274,37 +271,52 @@
         })
     }
 
+    // 下载视频
+    async function DownLoadMedia(href, urlData) {
+        const mediaRes = await getFileBlob(urlData.media, 'media', {
+            onprogress: (res) => {
+                const {
+                    loaded,
+                    totalSize
+                } = res
+                const completedQuantity = loaded
+                const total = totalSize
+                data[href].completedQuantity = completedQuantity
+                data[href].total = total
+                const percentage = completedQuantity / total * 100
 
-    async function main(href, urlData) {
-        const urlArr = Object.keys(urlData);
-        if (urlArr.length <= 0) {
-            // 没有资源
-            data[href].message = message.noImageError
-            return false
-        }
+                data[href].message = `中${formatNumber(completedQuantity / 1024/ 1024)}/${formatNumber(total / 1024/ 1024)}M（${formatNumber(percentage)}%）`
+            }
+        })
+        const suffixName = new URL(urlData.media).pathname.match(/\.(\w+)$/) && RegExp.$1 || 'mp4'
+        download(URL.createObjectURL(mediaRes._blob), `${data[href].title}.${suffixName}`)
+    }
 
+    // 下载图片（默认）
+    async function DownLoadImage(href, urlData, urlArr) {
         const total = urlArr.length
         data[href].total = total
-        const promiseList = urlArr.map((item) => getFileBlob(urlData[item], item, () => {
-            data[href].completedQuantity++
-            const completedQuantity = data[href].completedQuantity
+        const promiseList = urlArr.map((item) => getFileBlob(urlData[item], item, {
+            callback: () => {
+                data[href].completedQuantity++
+                const completedQuantity = data[href].completedQuantity
 
-            const percentage = new Intl.NumberFormat(undefined, {
-                maximumFractionDigits: 2
-            }).format(completedQuantity / total * 100)
-            data[href].message = `中${completedQuantity}/${total}（${percentage}%）`
+                const percentage = new Intl.NumberFormat(undefined, {
+                    maximumFractionDigits: 2
+                }).format(completedQuantity / total * 100)
+                data[href].message = `中${completedQuantity}/${total}（${percentage}%）`
+            }
         }))
         const imageRes = await Promise.all(promiseList)
 
-        // 下载视频
-        if (urlArr.length === 1 && urlArr[0] === 'media') {
-            const suffixName = new URL(urlData.media).pathname.match(/\.(\w+)$/) && RegExp.$1 || 'mp4'
-            download(URL.createObjectURL(imageRes[0]._blob), `${data[href].title}.${suffixName}`)
-        } else {
-            await pack(imageRes, data[href].title)
-        }
-        // 下载成功
-        data[href].message = message.finish
+        await pack(imageRes, data[href].title)
+    }
+
+    // 数字格式化
+    function formatNumber(number) {
+        return String(new Intl.NumberFormat(undefined, {
+            maximumFractionDigits: 2
+        }).format(number)).padStart(2, '0')
     }
 
     // dom修改文本
@@ -316,6 +328,25 @@
     // 获取dom文本
     function gettextDom(dom) {
         return $(dom).attr('show-text')
+    }
+
+    async function main(href, urlData) {
+        const urlArr = Object.keys(urlData);
+        if (urlArr.length <= 0) {
+            // 没有资源
+            data[href].message = message.noEmptyError
+            return false
+        }
+
+        if (urlArr.length === 1 && urlArr[0] === 'media') {
+            // 下载视频
+            await DownLoadMedia(href, urlData)
+        } else {
+            // 下载图片（默认）
+            await DownLoadImage(href, urlData, urlArr)
+        }
+        // 下载成功
+        data[href].message = message.finish
     }
 
     // 模拟esc
@@ -349,7 +380,7 @@
        `)
 
     $('.Main_full_1dfQX').on('click', '.woo-box-flex .head-info_info_2AspQ:not(.Feed_retweetHeadInfo_Tl4Ld)', async function (event) {
-        if (event.target.className !== event.currentTarget.className || ![message.noImageError, message.finish, undefined, ''].includes(gettextDom(this))) return false
+        if (event.target.className !== event.currentTarget.className || ![message.noEmptyError, message.finish, undefined, ''].includes(gettextDom(this))) return false
 
         const href = $(this).find('.head-info_time_6sFQg').attr('href')
 
@@ -359,7 +390,7 @@
             name: href,
             total: 0,
             completedQuantity: 0,
-            message: message.getReady,
+            message: '',
         }
 
         const {
@@ -370,12 +401,13 @@
 
         data[href].title = `${userName} ${time}`
         data[href].urlData = urlData
+        data[href].message = message.getReady
 
         main(href, urlData)
     })
 
     $('.showMessage').on('click', '.downloadBtn', async function (event) {
-        if (event.target.className !== event.currentTarget.className || ![message.noImageError, message.finish, undefined, ''].includes(gettextDom(this))) return false
+        if (event.target.className !== event.currentTarget.className || ![message.noEmptyError, message.finish, undefined, ''].includes(gettextDom(this))) return false
         const href = $(this).data('href')
 
         data[href].completedQuantity = 0
@@ -415,8 +447,8 @@
     .woo-box-flex .head-info_info_2AspQ:not(.Feed_retweetHeadInfo_Tl4Ld):after{content:"下载" attr(show-text);color:#ff8200;cursor:pointer}.woo-box-flex.Frame_content_3XrxZ #wah0713{font-size:12px;font-weight:700}.woo-box-flex.Frame_content_3XrxZ #wah0713 .container{position:fixed;left:0}.woo-box-flex.Frame_content_3XrxZ #wah0713:hover .input-box{display:block}.woo-box-flex.Frame_content_3XrxZ #wah0713 input{width:3em;color:#d52c2b;border-width:1px;outline:0;background-color:transparent}.woo-box-flex.Frame_content_3XrxZ #wah0713 .input-box{display:none}.woo-box-flex.Frame_content_3XrxZ #wah0713 .showMessage>p{line-height:16px;margin:4px}.woo-box-flex.Frame_content_3XrxZ #wah0713 .showMessage>p span{color:#333}.woo-box-flex.Frame_content_3XrxZ #wah0713 .showMessage>p span.red{color:#d52c2b}.woo-box-flex.Frame_content_3XrxZ #wah0713 .showMessage>p span.red.downloadBtn{cursor:pointer}
     `)
 
-    // debugJS
-    isDebug = true
-    unsafeWindow.$ = $
-    setTimeout(() => {}, 5 * 1000);
+    // // debugJS
+    // isDebug = true
+    // unsafeWindow.$ = $
+    // setTimeout(() => {}, 5 * 1000);
 })()
