@@ -244,20 +244,14 @@
                     response.topMedia = ''
                     try {
                         // retweeted_status 为转发
-                        if (res.response.retweeted_status) {
-                            if (res.response.retweeted_status.page_info) {
-                                response.topMedia = get(res.response.retweeted_status, 'page_info.media_info.playback_list[0].play_info.url', get(res.response.retweeted_status, 'page_info.media_info.stream_url', ''))
-                            }
-                            if (res.response.retweeted_status.pic_infos) {
-                                response.pic_infos = res.response.retweeted_status.pic_infos
-                            }
-                        } else {
-                            if (res.response.page_info) {
-                                response.topMedia = get(res.response, 'page_info.media_info.playback_list[0].play_info.url', get(res.response, 'page_info.media_info.stream_url', ''))
-                            }
-                            if (res.response.pic_infos) {
-                                response.pic_infos = res.response.pic_infos
-                            }
+                        if (res.response.retweeted_status && res.response.retweeted_status.pic_infos) {
+                            response.pic_infos = res.response.retweeted_status.pic_infos
+                        } else if (res.response.pic_infos) {
+                            response.pic_infos = res.response.pic_infos
+                        }
+                        // 视频
+                        if (res.response.page_info) {
+                            response.topMedia = get(res.response, 'page_info.media_info.playback_list[0].play_info.url', get(res.response, 'page_info.media_info.stream_url', ''))
                         }
                     } catch (error) {}
                     resolve(response)
