@@ -177,9 +177,6 @@
     function pack(imageRes, modification) {
         const zip = new JSZip();
         imageRes.forEach(function (obj) {
-            // 打包时过滤空文件
-            if (isEmptyFile(obj)) return false
-
             const suffixName = new URL(obj.finalUrl).pathname.match(/\.(\w+)$/) && RegExp.$1
             const name = `${modification}-part${obj._name}.${suffixName}`
             zip.file(name, obj._blob);
@@ -310,7 +307,7 @@
         }))
         const imageRes = await Promise.all(promiseList)
 
-        const content = await pack(imageRes, data[href].title)
+        const content = await pack(imageRes.filter(item => !isEmptyFile(item)), data[href].title)
         download(URL.createObjectURL(content), `${data[href].title}.zip`)
         return true
     }
@@ -324,8 +321,7 @@
 
     // dom修改文本
     function retextDom(dom, text) {
-        const $dom = $(dom)
-        $dom.attr('show-text', text)
+        $(dom).attr('show-text', text)
     }
 
     // 获取dom文本
@@ -443,6 +439,7 @@
 
         data[href].completedQuantity = 0
         data[href].message = message.getReady
+
         main(href, data[href].urlData)
     })
 
