@@ -33,9 +33,27 @@
 // ==/UserScript==
 
 (async function () {
-    const $frameContent = $('.woo-box-flex.Frame_content_3XrxZ')
-
-    if ($frameContent.length === 0) return false
+    const $frameContent = $('.Frame_content_3XrxZ')
+    const $mMain = $('.m-main')
+    let $main = ''
+    let $cardList = ''
+    let cardHeadStr = ''
+    let cardHeadAStr = ''
+    if ($frameContent.length === 0 && $mMain.length) {
+        // 搜索页面
+        $main = $mMain
+        $cardList = $('.main-full')
+        cardHeadStr = 'div.card-feed  div.from'
+        cardHeadAStr = 'a[suda-data]'
+    } else if ($frameContent.length && $mMain.length === 0) {
+        // 默认页面
+        $main = $frameContent
+        $cardList = $('.Main_full_1dfQX')
+        cardHeadStr = '.head-info_info_2AspQ'
+        cardHeadAStr = '.head-info_time_6sFQg'
+    } else {
+        return false
+    }
 
     // 是否开启dubug模式
     let isDebug = false
@@ -76,7 +94,7 @@
         } = target
         if (propKey === 'message') {
             // 数据变化更新消息
-            retextDom($(`.head-info_info_2AspQ:has(>[href="${name}"])`), value)
+            retextDom($(`${cardHeadStr}:has(>[href="${name}"])`), value)
             handleMessage(target, value)
         }
     })
@@ -124,7 +142,7 @@
 
     // 获取图片链接
     async function getfileUrlByInfo(dom) {
-        const id = $(dom).children('a').attr('href').match(/(?<=\/)(\w+$)/) && RegExp.$1
+        const id = $(dom).children('a').attr('href').match(/(?<=\d+\/)(\w+)/) && RegExp.$1
         const {
             topMedia,
             pic_infos,
@@ -396,7 +414,7 @@
     // 预览图片时，点击图片关闭预览功能
     $('.imgInstance.Viewer_imgElm_2JHWe').on('click', clickEscKey)
 
-    $frameContent.prepend(`
+    $main.prepend(`
         <div id="wah0713">
             <div class="container">
                 <div class="showMessage"></div>
@@ -406,10 +424,10 @@
         </div>
        `)
 
-    $('.Main_full_1dfQX').on('click', '.woo-box-flex .head-info_info_2AspQ:not(.Feed_retweetHeadInfo_Tl4Ld)', async function (event) {
+    $cardList.on('click', `${cardHeadStr}:not(.Feed_retweetHeadInfo_Tl4Ld)`, async function (event) {
         if (event.target.className !== event.currentTarget.className || ![message.isEmptyError, message.finish, undefined, ''].includes(gettextDom(this))) return false
 
-        const href = $(this).find('.head-info_time_6sFQg').attr('href')
+        const href = $(this).find(cardHeadAStr).attr('href')
 
         data[href] = {
             urlData: {},
@@ -456,23 +474,23 @@
     })
 
     const observer = new MutationObserver(() => {
-        $(`.head-info_info_2AspQ`).attr('show-text', '');
+        $(cardHeadStr).attr('show-text', '');
         requestAnimationFrame(() => {
             [...Object.keys(data)].forEach(item => {
                 const {
                     message,
                 } = data[item]
-                retextDom($(`.head-info_info_2AspQ:has(>[href="${item}"])`), message)
+                retextDom($(`${cardHeadStr}:has(>[href="${item}"])`), message)
             })
         })
     });
-    observer.observe($frameContent[0], {
+    observer.observe($main[0], {
         childList: true,
         subtree: true
     });
 
     GM_addStyle(`
-    .woo-box-flex .head-info_info_2AspQ:not(.Feed_retweetHeadInfo_Tl4Ld):after{content:"下载" attr(show-text);color:#ff8200;cursor:pointer}.woo-box-flex.Frame_content_3XrxZ #wah0713{font-size:12px;font-weight:700}.woo-box-flex.Frame_content_3XrxZ #wah0713 .container{position:fixed;left:0;z-index:1}.woo-box-flex.Frame_content_3XrxZ #wah0713:hover .input-box{display:block}.woo-box-flex.Frame_content_3XrxZ #wah0713 input{width:3em;color:#d52c2b;border-width:1px;outline:0;background-color:transparent}.woo-box-flex.Frame_content_3XrxZ #wah0713 .input-box{display:none}.woo-box-flex.Frame_content_3XrxZ #wah0713 .showMessage>p{line-height:16px;margin:4px}.woo-box-flex.Frame_content_3XrxZ #wah0713 .showMessage>p span{color:#333}.woo-box-flex.Frame_content_3XrxZ #wah0713 .showMessage>p span.red{color:#d52c2b}.woo-box-flex.Frame_content_3XrxZ #wah0713 .showMessage>p span.red.downloadBtn{cursor:pointer}
+    .head-info_info_2AspQ:not(.Feed_retweetHeadInfo_Tl4Ld):after,div.card-feed div.from:after{content:"下载" attr(show-text);color:#ff8200;cursor:pointer;float:right}.Frame_content_3XrxZ #wah0713,.m-main #wah0713{font-size:12px;font-weight:700}.Frame_content_3XrxZ #wah0713 .container,.m-main #wah0713 .container{position:fixed;left:0;z-index:1}.Frame_content_3XrxZ #wah0713:hover .input-box,.m-main #wah0713:hover .input-box{display:block}.Frame_content_3XrxZ #wah0713 input,.m-main #wah0713 input{width:3em;color:#d52c2b;border-width:1px;outline:0;background-color:transparent}.Frame_content_3XrxZ #wah0713 .input-box,.m-main #wah0713 .input-box{display:none}.Frame_content_3XrxZ #wah0713 .showMessage>p,.m-main #wah0713 .showMessage>p{line-height:16px;margin:4px}.Frame_content_3XrxZ #wah0713 .showMessage>p span,.m-main #wah0713 .showMessage>p span{color:#333}.Frame_content_3XrxZ #wah0713 .showMessage>p span.red,.m-main #wah0713 .showMessage>p span.red{color:#d52c2b}.Frame_content_3XrxZ #wah0713 .showMessage>p span.red.downloadBtn,.m-main #wah0713 .showMessage>p span.red.downloadBtn{cursor:pointer}
     `)
 
     // // debugJS
