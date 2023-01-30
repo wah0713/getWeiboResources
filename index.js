@@ -28,6 +28,8 @@
 // @grant        GM_addStyle
 // @grant        GM_setValue
 // @grant        GM_getValue
+// @grant        GM_registerMenuCommand
+// @grant        GM_unregisterMenuCommand
 // @grant        GM_xmlhttpRequest
 // @grant        unsafeWindow
 // ==/UserScript==
@@ -146,6 +148,7 @@
         const {
             topMedia,
             pic_infos,
+            region_name,
             created_at,
             user: {
                 screen_name
@@ -179,6 +182,7 @@
         return {
             urlData,
             time,
+            regionName: region_name,
             userName: screen_name
         }
     }
@@ -441,10 +445,20 @@
         const {
             urlData,
             time,
-            userName
+            userName,
+            regionName
         } = await getfileUrlByInfo(this)
 
-        data[href].title = `${userName} ${time}`
+        let title = `${userName} ${time}`
+        // 是否下载名中显示地域
+        if (regionName && config.isShowRegion.value) {
+            const region = regionName.match(/\s(.*)/) && RegExp.$1
+            if (region) {
+                title += ' ' + region
+            }
+        }
+
+        data[href].title = title
         data[href].urlData = urlData
         data[href].message = message.getReady
 
@@ -489,6 +503,33 @@
         subtree: true
     });
 
+    config = {
+        isShowRegion: {
+            name: '下载名中显示地域',
+            id: null,
+            value: GM_getValue('isShowRegion', false)
+        }
+    }
+
+    function updateMenuCommand() {
+        [...Object.keys(config)].forEach(item => {
+            const {
+                id,
+                value,
+                name
+            } = config[item]
+            if (id) {
+                GM_unregisterMenuCommand(id)
+            }
+            config[item].id = GM_registerMenuCommand(`${value?'✔️':'✖️'}${name}`, () => {
+                GM_setValue('isShowRegion', !value)
+                config[item].value = !value
+                updateMenuCommand()
+            })
+        })
+    }
+    updateMenuCommand()
+
     GM_addStyle(`
     .head-info_info_2AspQ:not(.Feed_retweetHeadInfo_Tl4Ld):after,div.card-feed div.from:after{content:"下载" attr(show-text);color:#ff8200;cursor:pointer;float:right}.Frame_content_3XrxZ #wah0713,.m-main #wah0713{font-size:12px;font-weight:700}.Frame_content_3XrxZ #wah0713 .container,.m-main #wah0713 .container{position:fixed;left:0;z-index:1}.Frame_content_3XrxZ #wah0713:hover .input-box,.m-main #wah0713:hover .input-box{display:block}.Frame_content_3XrxZ #wah0713 input,.m-main #wah0713 input{width:3em;color:#d52c2b;border-width:1px;outline:0;background-color:transparent}.Frame_content_3XrxZ #wah0713 .input-box,.m-main #wah0713 .input-box{display:none}.Frame_content_3XrxZ #wah0713 .showMessage>p,.m-main #wah0713 .showMessage>p{line-height:16px;margin:4px}.Frame_content_3XrxZ #wah0713 .showMessage>p span,.m-main #wah0713 .showMessage>p span{color:#333}.Frame_content_3XrxZ #wah0713 .showMessage>p span.red,.m-main #wah0713 .showMessage>p span.red{color:#d52c2b}.Frame_content_3XrxZ #wah0713 .showMessage>p span.red.downloadBtn,.m-main #wah0713 .showMessage>p span.red.downloadBtn{cursor:pointer}
     `)
@@ -496,5 +537,4 @@
     // // debugJS
     // isDebug = true
     // unsafeWindow.$ = $
-    // setTimeout(() => {}, 5 * 1000);
 })()
