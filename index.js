@@ -149,6 +149,7 @@
             topMedia,
             pic_infos,
             region_name,
+            geo,
             created_at,
             user: {
                 screen_name
@@ -182,8 +183,9 @@
         return {
             urlData,
             time,
+            geo,
             regionName: region_name,
-            userName: screen_name
+            userName: screen_name,
         }
     }
 
@@ -446,16 +448,23 @@
             urlData,
             time,
             userName,
-            regionName
+            regionName,
+            geo,
         } = await getfileUrlByInfo(this)
 
         let title = `${userName} ${time}`
-        // 是否下载名中显示地域
+        // 是否下载名中显示IP区域
         if (regionName && config.isShowRegion.value) {
             const region = regionName.match(/\s(.*)/) && RegExp.$1
             if (region) {
                 title += ' ' + region
             }
+        }
+
+        // 下载名中显示定位
+        const geoName = get(geo, 'detail.title', null)
+        if (geoName && config.isShowGeo.value) {
+            title += ' ' + geoName
         }
 
         data[href].title = title
@@ -503,11 +512,16 @@
         subtree: true
     });
 
-    config = {
+    const config = {
         isShowRegion: {
-            name: '下载名中显示地域',
+            name: '下载名中显示IP区域',
             id: null,
             value: GM_getValue('isShowRegion', false)
+        },
+        isShowGeo: {
+            name: '下载名中显示定位',
+            id: null,
+            value: GM_getValue('isShowGeo', false)
         }
     }
 
@@ -521,8 +535,8 @@
             if (id) {
                 GM_unregisterMenuCommand(id)
             }
-            config[item].id = GM_registerMenuCommand(`${value?'✔️':'✖️'}${name}`, () => {
-                GM_setValue('isShowRegion', !value)
+            config[item].id = GM_registerMenuCommand(`${value?'✔️':'❌'}${name}`, () => {
+                GM_setValue(item, !value)
                 config[item].value = !value
                 updateMenuCommand()
             })
