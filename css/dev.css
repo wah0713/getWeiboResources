@@ -5,6 +5,16 @@ div.card-feed div.from::after,
   cursor: pointer;
   float: right;
 }
+.Main_full_1dfQX.isFirst .head-info_info_2AspQ:not(.Feed_retweetHeadInfo_Tl4Ld)::after,
+.main-full.isFirst div.card-feed div.from::after {
+  animation: isFirst infinite 1s alternate;
+}
+@keyframes isFirst {
+  100% {
+    color: #0079f7;
+    transform: scale(2);
+  }
+}
 .m-main #wah0713,
 .Frame_content_3XrxZ #wah0713 {
   font-size: 12px;

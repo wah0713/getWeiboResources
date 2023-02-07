@@ -8,6 +8,20 @@ div.card-feed div.from,
     }
 }
 
+.Main_full_1dfQX.isFirst .head-info_info_2AspQ:not(.Feed_retweetHeadInfo_Tl4Ld),
+.main-full.isFirst div.card-feed div.from {
+    &::after {
+        animation: isFirst infinite 1s alternate;
+    }
+}
+
+@keyframes isFirst {
+    100% {
+        color: #0079f7;
+        transform: scale(2);
+    }
+}
+
 .m-main,
 .Frame_content_3XrxZ {
     #wah0713 {
