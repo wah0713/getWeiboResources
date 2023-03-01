@@ -39,16 +39,6 @@ div.card-feed div.from::after,
     transform: translate3d(0, 0, 0);
   }
 }
-@keyframes fadeOutLeft {
-  from {
-    opacity: 1;
-  }
-  to {
-    opacity: 0;
-    -webkit-transform: translate3d(-100%, 0, 0);
-    transform: translate3d(-100%, 0, 0);
-  }
-}
 .m-main #wah0713,
 .Frame_content_3XrxZ #wah0713 {
   font-size: 12px;
@@ -56,7 +46,11 @@ div.card-feed div.from::after,
 }
 .m-main #wah0713.out,
 .Frame_content_3XrxZ #wah0713.out {
-  animation: fadeOutLeft 3s forwards;
+  opacity: 0;
+}
+.m-main #wah0713.out:hover,
+.Frame_content_3XrxZ #wah0713.out:hover {
+  opacity: 1;
 }
 .m-main #wah0713 .container,
 .Frame_content_3XrxZ #wah0713 .container {

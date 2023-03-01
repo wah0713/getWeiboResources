@@ -54,18 +54,6 @@ div.card-feed div.from,
     }
 }
 
-@keyframes fadeOutLeft {
-    from {
-        opacity: 1;
-    }
-
-    to {
-        opacity: 0;
-        -webkit-transform: translate3d(-100%, 0, 0);
-        transform: translate3d(-100%, 0, 0);
-    }
-}
-
 .m-main,
 .Frame_content_3XrxZ {
     #wah0713 {
@@ -73,7 +61,11 @@ div.card-feed div.from,
         font-weight: bold;
 
         &.out {
-            animation: fadeOutLeft 3s forwards;
+            opacity: 0;
+
+            &:hover {
+                opacity: 1;
+            }
         }
 
         .container {
