@@ -46,5 +46,5 @@
 
 这个脚本是工作之余，自己<del>低级程序员</del>练练手，所以也不要有太多期待。
 <!-- weibo/wb -->
-[1.06]:https://img-blog.csdnimg.cn/a055f6a1160d42b6a74f97c49b7d274f.png
-[1.07]:https://img-blog.csdnimg.cn/110805d7b7824a7ebc127be8f95ed06e.png
+[1.07]:https://s1.ax1x.com/2023/03/11/ppu7Fx0.png
+[1.06]:https://s1.ax1x.com/2023/03/11/ppu7PGn.png
