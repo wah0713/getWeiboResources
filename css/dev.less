@@ -1,8 +1,12 @@
+body {
+    --yellow: #ff8200;
+}
+
 div.card-feed div.from,
 .head-info_info_2AspQ:not(.Feed_retweetHeadInfo_Tl4Ld) {
     &::after {
         content: "下载"attr(show-text);
-        color: #ff8200;
+        color: var(--yellow);
         cursor: pointer;
         float: right;
     }
@@ -82,7 +86,7 @@ div.card-feed div.from,
 
         input {
             width: 3em;
-            color: #d52c2b;
+            color: var(--yellow);
             border-width: 1px;
             outline: 0;
             background-color: transparent;
@@ -101,7 +105,7 @@ div.card-feed div.from,
                     color: #333;
 
                     &.red {
-                        color: #d52c2b;
+                        color: var(--yellow);
 
                         &.downloadBtn {
                             cursor: pointer;

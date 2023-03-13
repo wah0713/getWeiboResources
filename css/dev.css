@@ -1,7 +1,10 @@
+body {
+  --yellow: #ff8200;
+}
 div.card-feed div.from::after,
 .head-info_info_2AspQ:not(.Feed_retweetHeadInfo_Tl4Ld)::after {
   content: "下载" attr(show-text);
-  color: #ff8200;
+  color: var(--yellow);
   cursor: pointer;
   float: right;
 }
@@ -65,7 +68,7 @@ div.card-feed div.from::after,
 .m-main #wah0713 input,
 .Frame_content_3XrxZ #wah0713 input {
   width: 3em;
-  color: #d52c2b;
+  color: var(--yellow);
   border-width: 1px;
   outline: 0;
   background-color: transparent;
@@ -85,7 +88,7 @@ div.card-feed div.from::after,
 }
 .m-main #wah0713 .showMessage > p span.red,
 .Frame_content_3XrxZ #wah0713 .showMessage > p span.red {
-  color: #d52c2b;
+  color: var(--yellow);
 }
 .m-main #wah0713 .showMessage > p span.red.downloadBtn,
 .Frame_content_3XrxZ #wah0713 .showMessage > p span.red.downloadBtn {
