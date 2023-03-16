@@ -163,6 +163,7 @@
         const {
             topMedia,
             pic_infos,
+            mix_media_info,
             region_name,
             geo,
             created_at,
@@ -183,10 +184,27 @@
 
         // 图片
         pic_infos && [...Object.keys(pic_infos)].forEach((ele, index) => {
-            urlData[formatNumber(index + 1)] = pic_infos[ele].largest.url
+            urlData[formatNumber(index + 1)] = get(pic_infos[ele], 'largest.url', '')
 
             if (pic_infos[ele].type === 'livephoto') {
-                urlData[`${formatNumber(index + 1)}_live`] = pic_infos[ele].video
+                urlData[`${formatNumber(index + 1)}_live`] = get(pic_infos[ele], 'video', '')
+            }
+        })
+
+        // 图片加视频
+        mix_media_info && mix_media_info.items.forEach((ele, index) => {
+            let imgUrl = null
+            let mediaUrl = null
+            if (ele.type === "video") {
+                imgUrl = get(ele, 'data.pic_info.pic_big.url', '')
+                mediaUrl = get(ele, 'data.media_info.mp4_sd_url', '')
+            } else {
+                imgUrl = get(ele, 'data.largest.url', '')
+            }
+
+            urlData[formatNumber(index + 1)] = imgUrl
+            if (mediaUrl) {
+                urlData[`${formatNumber(index + 1)}_media`] = mediaUrl
             }
         })
 
@@ -281,11 +299,11 @@
                     response.topMedia = ''
                     try {
                         // retweeted_status 为转发
-                        if (res.response.retweeted_status && res.response.retweeted_status.pic_infos) {
+                        if (res.response.retweeted_status) {
                             response.pic_infos = res.response.retweeted_status.pic_infos
-                        } else if (res.response.pic_infos) {
-                            response.pic_infos = res.response.pic_infos
+                            response.mix_media_info = res.response.retweeted_status.mix_media_info
                         }
+
                         // 视频
                         if (res.response.page_info) {
                             response.topMedia = get(res.response, 'page_info.media_info.playback_list[0].play_info.url', get(res.response, 'page_info.media_info.stream_url', ''))
@@ -331,7 +349,7 @@
     }
 
     // 下载图片（默认）
-    async function DownLoadImage(href, urlData, urlArr) {
+    async function DownLoadDefault(href, urlData, urlArr) {
         const total = urlArr.length
         data[href].total = total
         const promiseList = urlArr.map((item) => getFileBlob(urlData[item], item, {
@@ -404,8 +422,8 @@
             // 下载视频
             isSuccess = await DownLoadMedia(href, urlData)
         } else {
-            // 下载图片（默认）
-            isSuccess = await DownLoadImage(href, urlData, urlArr)
+            // 下载（默认）
+            isSuccess = await DownLoadDefault(href, urlData, urlArr)
         }
         if (isSuccess) {
             // 下载成功
