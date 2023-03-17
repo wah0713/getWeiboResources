@@ -348,7 +348,7 @@
         return false
     }
 
-    // 下载图片（默认）
+    // 下载（默认）
     async function DownLoadDefault(href, urlData, urlArr) {
         const total = urlArr.length
         data[href].total = total
@@ -417,7 +417,7 @@
             return false
         }
 
-        let = isSuccess = true
+        let isSuccess = true
         if (urlArr.length === 1 && urlArr[0] === 'media') {
             // 下载视频
             isSuccess = await DownLoadMedia(href, urlData)
@@ -498,7 +498,7 @@
             geo,
         } = await getfileUrlByInfo(this)
 
-        let title = `${userName} ${time}`
+        let title = `${userName} ${time}`.replace(/:/g, '：').replace(/_/g, '')
         // 是否下载名中显示IP区域
         if (regionName && config.isShowRegion.value) {
             const region = regionName.match(/\s(.*)/) && RegExp.$1
