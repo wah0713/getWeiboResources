@@ -498,7 +498,10 @@
             geo,
         } = await getfileUrlByInfo(this)
 
-        let title = `${userName} ${time}`.replace(/:/g, '：').replace(/_/g, '')
+        let title = `${userName} ${time}`.replace(/:/g, '：')
+        if (config.isFilterUserNames.value) {
+            title = title.replace(/_/g, '')
+        }
         // 是否下载名中显示IP区域
         if (regionName && config.isShowRegion.value) {
             const region = regionName.match(/\s(.*)/) && RegExp.$1
@@ -578,6 +581,11 @@
             name: '左侧消息过滤【已经完成】',
             id: null,
             value: GM_getValue('isShowActive', false)
+        },
+        isFilterUserNames: {
+            name: '过滤微博用户名中的下划线【_】（方便文件搜索）',
+            id: null,
+            value: GM_getValue('isFilterUserNames', false)
         }
     }
 
