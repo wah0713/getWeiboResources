@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         微博一键下载（9宫格&&视频）
 // @namespace    https://github.com/wah0713/getWeiboResources
-// @version      1.7.1
+// @version      1.7.2
 // @description  一个兴趣使然的脚本，微博一键下载脚本。傻瓜式-简单、易用、可靠
 // @supportURL   https://github.com/wah0713/getWeiboResources/issues
 // @updateURL    https://greasyfork.org/scripts/454816/code/download.user.js
@@ -498,10 +498,7 @@
             geo,
         } = await getfileUrlByInfo(this)
 
-        let title = `${userName} ${time}`.replace(/:/g, '：')
-        if (config.isFilterUserNames.value) {
-            title = title.replace(/_/g, '')
-        }
+        let title = `${userName} ${time}`
         // 是否下载名中显示IP区域
         if (regionName && config.isShowRegion.value) {
             const region = regionName.match(/\s(.*)/) && RegExp.$1
@@ -581,11 +578,6 @@
             name: '左侧消息过滤【已经完成】',
             id: null,
             value: GM_getValue('isShowActive', false)
-        },
-        isFilterUserNames: {
-            name: '过滤微博用户名中的下划线【_】（方便文件搜索）',
-            id: null,
-            value: GM_getValue('isFilterUserNames', false)
         }
     }
 
