@@ -498,19 +498,19 @@
             geo,
         } = await getfileUrlByInfo(this)
 
-        let title = `${userName} ${time}`
+        let title = `${userName}_${time}`.replace(/\s/g, '_')
         // 是否下载名中显示IP区域
         if (regionName && config.isShowRegion.value) {
             const region = regionName.match(/\s(.*)/) && RegExp.$1
             if (region) {
-                title += ' ' + region
+                title += '_' + region
             }
         }
 
         // 下载名中显示定位
         const geoName = get(geo, 'detail.title', null)
         if (geoName && config.isShowGeo.value) {
-            title += ' ' + geoName
+            title += '_' + geoName
         }
 
         data[href].title = title
