@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         微博一键下载（9宫格&&视频）
 // @namespace    https://github.com/wah0713/getWeiboResources
-// @version      1.7.2
+// @version      1.7.3
 // @description  一个兴趣使然的脚本，微博一键下载脚本。傻瓜式-简单、易用、可靠
 // @supportURL   https://github.com/wah0713/getWeiboResources/issues
 // @updateURL    https://greasyfork.org/scripts/454816/code/download.user.js
@@ -498,19 +498,24 @@
             geo,
         } = await getfileUrlByInfo(this)
 
-        let title = `${userName}_${time}`.replace(/\s/g, '_')
+        let title = `${userName} ${time}`
+
         // 是否下载名中显示IP区域
         if (regionName && config.isShowRegion.value) {
             const region = regionName.match(/\s(.*)/) && RegExp.$1
             if (region) {
-                title += '_' + region
+                title += ' ' + region
             }
         }
 
         // 下载名中显示定位
         const geoName = get(geo, 'detail.title', null)
         if (geoName && config.isShowGeo.value) {
-            title += '_' + geoName
+            title += ' ' + geoName
+        }
+
+        if (config.isFilterUserNames.value) {
+            title = title.replace(/\s/g, '_')
         }
 
         data[href].title = title
@@ -578,6 +583,11 @@
             name: '左侧消息过滤【已经完成】',
             id: null,
             value: GM_getValue('isShowActive', false)
+        },
+        isFilterUserNames: {
+            name: '替换下载名中空格为下划线【_】（方便文件搜索）',
+            id: null,
+            value: GM_getValue('isFilterUserNames', false)
         }
     }
 
