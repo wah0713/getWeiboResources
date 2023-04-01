@@ -94,3 +94,11 @@ div.card-feed div.from::after,
 .Frame_content_3XrxZ #wah0713 .showMessage > p span.red.downloadBtn {
   cursor: pointer;
 }
+.m-main #wah0713 .showMessage > p a,
+.Frame_content_3XrxZ #wah0713 .showMessage > p a {
+  color: #333;
+}
+.m-main #wah0713 .showMessage > p a:hover,
+.Frame_content_3XrxZ #wah0713 .showMessage > p a:hover {
+  text-decoration: none;
+}
