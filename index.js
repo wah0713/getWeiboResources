@@ -184,7 +184,7 @@
 
         // 图片
         pic_infos && [...Object.keys(pic_infos)].forEach((ele, index) => {
-            urlData[formatNumber(index + 1)] = get(pic_infos[ele], 'largest.url', '')
+            urlData[formatNumber(index + 1)] = get(pic_infos[ele], 'mw2000.url', '')
 
             if (pic_infos[ele].type === 'livephoto') {
                 urlData[`${formatNumber(index + 1)}_live`] = get(pic_infos[ele], 'video', '')
@@ -196,10 +196,10 @@
             let imgUrl = null
             let mediaUrl = null
             if (ele.type === "video") {
-                imgUrl = get(ele, 'data.pic_info.pic_big.url', '')
+                imgUrl = get(ele, 'data.pic_info.pic_big.url', '').replace(/(?<=.\w+\/)[a-z\d]+/, 'mw2000')
                 mediaUrl = get(ele, 'data.media_info.mp4_sd_url', '')
             } else {
-                imgUrl = get(ele, 'data.largest.url', '')
+                imgUrl = get(ele, 'data.mw2000.url', '')
             }
 
             urlData[formatNumber(index + 1)] = imgUrl
