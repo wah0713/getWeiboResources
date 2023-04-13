@@ -573,6 +573,7 @@
             }
         }
 
+        // 下载名中显示微博文本(前20字)
         if (config.isNameIncludesText.value) {
             title += ' ' + text.slice(0, 20)
         }
@@ -583,6 +584,7 @@
             title += ' ' + geoName
         }
 
+        // 替换下载名中空格为下划线【_】(方便文件搜索)
         if (config.isFilterUserNames.value) {
             title = title.replace(/\s/g, '_')
         }
@@ -640,7 +642,7 @@
             value: GM_getValue('isShowGeo', false)
         },
         isNameIncludesText: {
-            name: '下载文件名包含微博文本(前20字)',
+            name: '下载名中显示微博文本(前20字)',
             id: null,
             value: GM_getValue('isNameIncludesText', false)
         },
