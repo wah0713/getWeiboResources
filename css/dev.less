@@ -106,6 +106,7 @@ div.card-feed div.from,
 
                     &.red {
                         color: var(--yellow);
+                        vertical-align: top;
 
                         &.downloadBtn {
                             cursor: pointer;
@@ -115,6 +116,11 @@ div.card-feed div.from,
 
                 a {
                     color: #333;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    max-width: 300px;
+                    display: inline-block;
+                    white-space: nowrap;
 
                     &:hover {
                         text-decoration: none;

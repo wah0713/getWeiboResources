@@ -89,6 +89,7 @@ div.card-feed div.from::after,
 .m-main #wah0713 .showMessage > p span.red,
 .Frame_content_3XrxZ #wah0713 .showMessage > p span.red {
   color: var(--yellow);
+  vertical-align: top;
 }
 .m-main #wah0713 .showMessage > p span.red.downloadBtn,
 .Frame_content_3XrxZ #wah0713 .showMessage > p span.red.downloadBtn {
@@ -97,6 +98,11 @@ div.card-feed div.from::after,
 .m-main #wah0713 .showMessage > p a,
 .Frame_content_3XrxZ #wah0713 .showMessage > p a {
   color: #333;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 300px;
+  display: inline-block;
+  white-space: nowrap;
 }
 .m-main #wah0713 .showMessage > p a:hover,
 .Frame_content_3XrxZ #wah0713 .showMessage > p a:hover {

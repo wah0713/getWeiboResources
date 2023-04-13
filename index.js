@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         微博一键下载（9宫格&&视频）
 // @namespace    https://github.com/wah0713/getWeiboResources
-// @version      1.7.4
+// @version      1.8.0
 // @description  一个兴趣使然的脚本，微博一键下载脚本。傻瓜式-简单、易用、可靠
 // @supportURL   https://github.com/wah0713/getWeiboResources/issues
 // @updateURL    https://greasyfork.org/scripts/454816/code/download.user.js
@@ -164,6 +164,7 @@
             topMedia,
             pic_infos,
             mix_media_info,
+            text_raw,
             region_name,
             geo,
             created_at,
@@ -217,6 +218,7 @@
             urlData,
             time,
             geo,
+            text: text_raw,
             regionName: region_name,
             userName: screen_name,
         }
@@ -230,12 +232,20 @@
         return false
     }
 
+    // 获取后缀
+    function getSuffixName(url) {
+        let suffixName = new URL(url).pathname.match(/\.(\w+)$/) && RegExp.$1
+        if (['json', null].includes(suffixName)) {
+            suffixName = 'mp4'
+        }
+        return suffixName
+    }
+
     // 打包
-    function pack(imageRes, modification) {
+    function pack(resBlob, modification) {
         const zip = new JSZip();
-        imageRes.forEach(function (obj) {
-            const suffixName = new URL(obj.finalUrl).pathname.match(/\.(\w+)$/) && RegExp.$1
-            const name = `${modification}-part${obj._name}.${suffixName}`
+        resBlob.forEach(function (obj) {
+            const name = `${modification}-${/^\d/.test(obj._name)?'part':''}${obj._name}.${getSuffixName(obj.finalUrl || obj.media)}`
             zip.file(name, obj._blob);
         });
         return new Promise(async (resolve, rejcet) => {
@@ -254,6 +264,20 @@
         a.click()
         a.remove()
         URL.revokeObjectURL(url)
+    }
+
+    // 下载流（文本）
+    function getTextBlob(text) {
+        var content = text;
+
+        var _blob = new Blob([content], {
+            type: "text/plain;charset=utf-8"
+        });
+        return {
+            _blob,
+            _name: 'text',
+            finalUrl: 'https://github.com/wah0713/text.txt'
+        }
     }
 
     // 下载流
@@ -320,7 +344,7 @@
     }
 
     // 下载视频
-    async function DownLoadMedia(href, urlData) {
+    async function DownLoadMedia(href, urlData, text) {
         const mediaRes = await getFileBlob(urlData.media, 'media', {
             onprogress: (res) => {
                 const {
@@ -336,20 +360,23 @@
                 data[href].message = `中${formatNumber(completedQuantity / 1024/ 1024)}/${formatNumber(total / 1024/ 1024)}M（${formatNumber(percentage)}%）`
             }
         })
-        let suffixName = new URL(urlData.media).pathname.match(/\.(\w+)$/) && RegExp.$1
-        if (['json', null].includes(suffixName)) {
-            suffixName = 'mp4'
-        }
 
-        if (mediaRes._blob) {
-            download(URL.createObjectURL(mediaRes._blob), `${data[href].title}.${suffixName}`)
+        if (text) {
+            const content = await pack([{
+                _name: 'media',
+                ...mediaRes,
+            }, getTextBlob(text)], data[href].title)
+            download(URL.createObjectURL(content), `${data[href].title}.zip`)
+            return true
+        } else {
+            download(URL.createObjectURL(mediaRes._blob), `${data[href].title}.${getSuffixName(urlData.media)}`)
             return true
         }
         return false
     }
 
     // 下载（默认）
-    async function DownLoadDefault(href, urlData, urlArr) {
+    async function DownLoadDefault(href, urlData, urlArr, text = '') {
         const total = urlArr.length
         data[href].total = total
         const promiseList = urlArr.map((item) => getFileBlob(urlData[item], item, {
@@ -363,10 +390,20 @@
                 data[href].message = `中${completedQuantity}/${total}（${percentage}%）`
             }
         }))
+
+        if (text) {
+            promiseList.push(getTextBlob(text))
+        }
+
         const imageRes = await Promise.all(promiseList)
 
-        const content = await pack(imageRes.filter(item => !isEmptyFile(item)), data[href].title)
-        download(URL.createObjectURL(content), `${data[href].title}.zip`)
+        if (imageRes.length === 1) {
+            download(URL.createObjectURL(imageRes[0]._blob), `${data[href].title}.${getSuffixName(imageRes[0].finalUrl)}`)
+            return true
+        } else {
+            const content = await pack(imageRes.filter(item => !isEmptyFile(item)), data[href].title)
+            download(URL.createObjectURL(content), `${data[href].title}.zip`)
+        }
         return true
     }
 
@@ -409,7 +446,7 @@
         }, object) || defaultVal;
     }
 
-    async function main(href, urlData) {
+    async function main(href, urlData, text) {
         const urlArr = Object.keys(urlData);
         if (urlArr.length <= 0) {
             // 没有资源
@@ -418,12 +455,17 @@
         }
 
         let isSuccess = true
+
+        if (!config.isIncludesText.value) {
+            text = ''
+        }
+
         if (urlArr.length === 1 && urlArr[0] === 'media') {
             // 下载视频
-            isSuccess = await DownLoadMedia(href, urlData)
+            isSuccess = await DownLoadMedia(href, urlData, text)
         } else {
             // 下载（默认）
-            isSuccess = await DownLoadDefault(href, urlData, urlArr)
+            isSuccess = await DownLoadDefault(href, urlData, urlArr, text)
         }
         if (isSuccess) {
             // 下载成功
@@ -483,6 +525,7 @@
 
         data[href] = {
             urlData: {},
+            text: '',
             title: '',
             name: href,
             total: 0,
@@ -496,8 +539,30 @@
             userName,
             regionName,
             geo,
+            text
         } = await getfileUrlByInfo(this)
 
+        data[href].title = getFileName({
+            time,
+            userName,
+            regionName,
+            geo,
+            text
+        })
+        data[href].urlData = urlData
+        data[href].text = text
+        data[href].message = message.getReady
+
+        main(href, urlData, text)
+    })
+
+    function getFileName({
+        time,
+        userName,
+        regionName,
+        geo,
+        text
+    }) {
         let title = `${userName} ${time}`
 
         // 是否下载名中显示IP区域
@@ -506,6 +571,10 @@
             if (region) {
                 title += ' ' + region
             }
+        }
+
+        if (config.isNameIncludesText.value) {
+            title += ' ' + text.slice(0, 20)
         }
 
         // 下载名中显示定位
@@ -518,12 +587,8 @@
             title = title.replace(/\s/g, '_')
         }
 
-        data[href].title = title
-        data[href].urlData = urlData
-        data[href].message = message.getReady
-
-        main(href, urlData)
-    })
+        return title
+    }
 
     $('.showMessage').on('click', '.downloadBtn', async function (event) {
         if (event.target.className !== event.currentTarget.className || ![message.isEmptyError, message.finish, undefined, ''].includes(gettextDom(this))) return false
@@ -532,7 +597,7 @@
         data[href].completedQuantity = 0
         data[href].message = message.getReady
 
-        main(href, data[href].urlData)
+        main(href, data[href].urlData, data[href].text)
     })
 
     $('#wah0713 .container .input-box input').change(event => {
@@ -574,6 +639,11 @@
             id: null,
             value: GM_getValue('isShowGeo', false)
         },
+        isNameIncludesText: {
+            name: '下载文件名包含微博文本(前20字)',
+            id: null,
+            value: GM_getValue('isNameIncludesText', false)
+        },
         isAutoHide: {
             name: '左侧消息自动消失',
             id: null,
@@ -585,9 +655,14 @@
             value: GM_getValue('isShowActive', false)
         },
         isFilterUserNames: {
-            name: '替换下载名中空格为下划线【_】（方便文件搜索）',
+            name: '替换下载名中空格为下划线【_】(方便文件搜索)',
             id: null,
             value: GM_getValue('isFilterUserNames', false)
+        },
+        isIncludesText: {
+            name: '下载文件中包含微博文本',
+            id: null,
+            value: GM_getValue('isIncludesText', false)
         }
     }
 
@@ -611,7 +686,7 @@
     updateMenuCommand()
 
     GM_addStyle(`
-body{--yellow:#ff8200}.head-info_info_2AspQ:not(.Feed_retweetHeadInfo_Tl4Ld):after,div.card-feed div.from:after{content:"下载" attr(show-text);color:var(--yellow);cursor:pointer;float:right}.main-full.isFirst div.card-feed div.from:after,.Main_full_1dfQX.isFirst .head-info_info_2AspQ:not(.Feed_retweetHeadInfo_Tl4Ld):after{animation:wobble 1s infinite alternate}@keyframes wobble{0%{-webkit-transform:translateZ(0);transform:translateZ(0)}15%{-webkit-transform:translate3d(-25%,0,0) rotate(-5deg);transform:translate3d(-25%,0,0) rotate(-5deg)}30%{-webkit-transform:translate3d(20%,0,0) rotate(3deg);transform:translate3d(20%,0,0) rotate(3deg)}45%{-webkit-transform:translate3d(-15%,0,0) rotate(-3deg);transform:translate3d(-15%,0,0) rotate(-3deg)}60%{-webkit-transform:translate3d(10%,0,0) rotate(2deg);transform:translate3d(10%,0,0) rotate(2deg)}75%{-webkit-transform:translate3d(-5%,0,0) rotate(-1deg);transform:translate3d(-5%,0,0) rotate(-1deg)}to{-webkit-transform:translateZ(0);transform:translateZ(0)}}.Frame_content_3XrxZ #wah0713,.m-main #wah0713{font-size:12px;font-weight:700}.Frame_content_3XrxZ #wah0713.out,.m-main #wah0713.out{opacity:0}.Frame_content_3XrxZ #wah0713.out:hover,.m-main #wah0713.out:hover{opacity:1}.Frame_content_3XrxZ #wah0713 .container,.m-main #wah0713 .container{position:fixed;left:0;z-index:1}.Frame_content_3XrxZ #wah0713:hover .input-box,.m-main #wah0713:hover .input-box{display:block}.Frame_content_3XrxZ #wah0713 input,.m-main #wah0713 input{width:3em;color:var(--yellow);border-width:1px;outline:0;background-color:transparent}.Frame_content_3XrxZ #wah0713 .input-box,.m-main #wah0713 .input-box{display:none}.Frame_content_3XrxZ #wah0713 .showMessage>p,.m-main #wah0713 .showMessage>p{line-height:16px;margin:4px}.Frame_content_3XrxZ #wah0713 .showMessage>p span,.m-main #wah0713 .showMessage>p span{color:#333}.Frame_content_3XrxZ #wah0713 .showMessage>p span.red,.m-main #wah0713 .showMessage>p span.red{color:var(--yellow)}.Frame_content_3XrxZ #wah0713 .showMessage>p span.red.downloadBtn,.m-main #wah0713 .showMessage>p span.red.downloadBtn{cursor:pointer}.Frame_content_3XrxZ #wah0713 .showMessage>p a,.m-main #wah0713 .showMessage>p a{color:#333}.Frame_content_3XrxZ #wah0713 .showMessage>p a:hover,.m-main #wah0713 .showMessage>p a:hover{text-decoration:none}
+   body{--yellow:#ff8200}.head-info_info_2AspQ:not(.Feed_retweetHeadInfo_Tl4Ld):after,div.card-feed div.from:after{content:"下载" attr(show-text);color:var(--yellow);cursor:pointer;float:right}.main-full.isFirst div.card-feed div.from:after,.Main_full_1dfQX.isFirst .head-info_info_2AspQ:not(.Feed_retweetHeadInfo_Tl4Ld):after{animation:wobble 1s infinite alternate}@keyframes wobble{0%{-webkit-transform:translateZ(0);transform:translateZ(0)}15%{-webkit-transform:translate3d(-25%,0,0) rotate(-5deg);transform:translate3d(-25%,0,0) rotate(-5deg)}30%{-webkit-transform:translate3d(20%,0,0) rotate(3deg);transform:translate3d(20%,0,0) rotate(3deg)}45%{-webkit-transform:translate3d(-15%,0,0) rotate(-3deg);transform:translate3d(-15%,0,0) rotate(-3deg)}60%{-webkit-transform:translate3d(10%,0,0) rotate(2deg);transform:translate3d(10%,0,0) rotate(2deg)}75%{-webkit-transform:translate3d(-5%,0,0) rotate(-1deg);transform:translate3d(-5%,0,0) rotate(-1deg)}to{-webkit-transform:translateZ(0);transform:translateZ(0)}}.Frame_content_3XrxZ #wah0713,.m-main #wah0713{font-size:12px;font-weight:700}.Frame_content_3XrxZ #wah0713.out,.m-main #wah0713.out{opacity:0}.Frame_content_3XrxZ #wah0713.out:hover,.m-main #wah0713.out:hover{opacity:1}.Frame_content_3XrxZ #wah0713 .container,.m-main #wah0713 .container{position:fixed;left:0;z-index:1}.Frame_content_3XrxZ #wah0713:hover .input-box,.m-main #wah0713:hover .input-box{display:block}.Frame_content_3XrxZ #wah0713 input,.m-main #wah0713 input{width:3em;color:var(--yellow);border-width:1px;outline:0;background-color:transparent}.Frame_content_3XrxZ #wah0713 .input-box,.m-main #wah0713 .input-box{display:none}.Frame_content_3XrxZ #wah0713 .showMessage>p,.m-main #wah0713 .showMessage>p{line-height:16px;margin:4px}.Frame_content_3XrxZ #wah0713 .showMessage>p span,.m-main #wah0713 .showMessage>p span{color:#333}.Frame_content_3XrxZ #wah0713 .showMessage>p span.red,.m-main #wah0713 .showMessage>p span.red{color:var(--yellow);vertical-align:top}.Frame_content_3XrxZ #wah0713 .showMessage>p span.red.downloadBtn,.m-main #wah0713 .showMessage>p span.red.downloadBtn{cursor:pointer}.Frame_content_3XrxZ #wah0713 .showMessage>p a,.m-main #wah0713 .showMessage>p a{color:#333;overflow:hidden;text-overflow:ellipsis;max-width:300px;display:inline-block;white-space:nowrap}.Frame_content_3XrxZ #wah0713 .showMessage>p a:hover,.m-main #wah0713 .showMessage>p a:hover{text-decoration:none}
           `)
 
     // // debugJS
