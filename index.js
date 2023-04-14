@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         微博一键下载（9宫格&&视频）
 // @namespace    https://github.com/wah0713/getWeiboResources
-// @version      1.8.0
+// @version      1.8.1
 // @description  一个兴趣使然的脚本，微博一键下载脚本。傻瓜式-简单、易用、可靠
 // @supportURL   https://github.com/wah0713/getWeiboResources/issues
 // @updateURL    https://greasyfork.org/scripts/454816/code/download.user.js
@@ -184,30 +184,67 @@
         const urlData = {};
 
         // 图片
-        pic_infos && [...Object.keys(pic_infos)].forEach((ele, index) => {
-            urlData[formatNumber(index + 1)] = get(pic_infos[ele], 'mw2000.url', '')
+        if (pic_infos) {
+            const arr = [...Object.keys(pic_infos)]
+            if (arr.length === 1) {
+                const ele = arr[0]
+                const url = get(pic_infos[ele], 'mw2000.url', '')
+                urlData[`.${getSuffixName(url)}`] = url
 
-            if (pic_infos[ele].type === 'livephoto') {
-                urlData[`${formatNumber(index + 1)}_live`] = get(pic_infos[ele], 'video', '')
+                if (pic_infos[ele].type === 'livephoto') {
+                    const url = get(pic_infos[ele], 'video', '')
+                    urlData[`.${getSuffixName(url)}`] = url
+                }
+            } else {
+                arr.forEach((ele, index) => {
+                    const url = get(pic_infos[ele], 'mw2000.url', '')
+                    urlData[`-part${formatNumber(index + 1)}.${getSuffixName(url)}`] = url
+
+                    if (pic_infos[ele].type === 'livephoto') {
+                        const url = get(pic_infos[ele], 'video', '')
+                        urlData[`-part${formatNumber(index + 1)}.${getSuffixName(url)}`] = url
+                    }
+                })
             }
-        })
+        }
 
         // 图片加视频
-        mix_media_info && mix_media_info.items.forEach((ele, index) => {
-            let imgUrl = null
-            let mediaUrl = null
-            if (ele.type === "video") {
-                imgUrl = get(ele, 'data.pic_info.pic_big.url', '').replace(/(?<=.\w+\/)[a-z\d]+/, 'mw2000')
-                mediaUrl = get(ele, 'data.media_info.mp4_sd_url', '')
-            } else {
-                imgUrl = get(ele, 'data.mw2000.url', '')
-            }
+        if (mix_media_info) {
+            if (mix_media_info.items === 1) {
+                const ele = mix_media_info.items[0]
+                let imgUrl = null
+                let mediaUrl = null
+                if (ele.type === "video") {
+                    imgUrl = get(ele, 'data.pic_info.pic_big.url', '').replace(/(?<=.\w+\/)[a-z\d]+/, 'mw2000')
+                    mediaUrl = get(ele, 'data.media_info.mp4_sd_url', '')
+                } else {
+                    imgUrl = get(ele, 'data.mw2000.url', '')
+                }
 
-            urlData[formatNumber(index + 1)] = imgUrl
-            if (mediaUrl) {
-                urlData[`${formatNumber(index + 1)}_media`] = mediaUrl
+                urlData[`.${getSuffixName(imgUrl)}`] = imgUrl
+
+                if (mediaUrl) {
+                    urlData[`.${getSuffixName(mediaUrl)}`] = mediaUrl
+                }
+            } else {
+                mix_media_info.items.forEach((ele, index) => {
+                    let imgUrl = null
+                    let mediaUrl = null
+                    if (ele.type === "video") {
+                        imgUrl = get(ele, 'data.pic_info.pic_big.url', '').replace(/(?<=.\w+\/)[a-z\d]+/, 'mw2000')
+                        mediaUrl = get(ele, 'data.media_info.mp4_sd_url', '')
+                    } else {
+                        imgUrl = get(ele, 'data.mw2000.url', '')
+                    }
+
+                    urlData[`-part${formatNumber(index + 1)}.${getSuffixName(imgUrl)}`] = imgUrl
+
+                    if (mediaUrl) {
+                        urlData[`-part${formatNumber(index + 1)}.${getSuffixName(mediaUrl)}`] = mediaUrl
+                    }
+                })
             }
-        })
+        }
 
         // 视频
         if (topMedia) {
@@ -241,11 +278,48 @@
         return suffixName
     }
 
+    // 处理名称
+    function getFileName({
+        time,
+        userName,
+        regionName,
+        geo,
+        text
+    }) {
+        let title = `${userName} ${time}`
+
+        // 是否下载名中显示IP区域
+        if (regionName && config.isShowRegion.value) {
+            const region = regionName.match(/\s(.*)/) && RegExp.$1
+            if (region) {
+                title += ' ' + region
+            }
+        }
+
+        // 下载名中显示微博文本(前20字)
+        if (config.isNameIncludesText.value) {
+            title += ' ' + text.slice(0, 20)
+        }
+
+        // 下载名中显示定位
+        const geoName = get(geo, 'detail.title', null)
+        if (geoName && config.isShowGeo.value) {
+            title += ' ' + geoName
+        }
+
+        // 替换下载名中空格为下划线【_】(方便文件搜索)
+        if (config.isFilterUserNames.value) {
+            title = title.replace(/\s/g, '_')
+        }
+
+        return title
+    }
+
     // 打包
     function pack(resBlob, modification) {
         const zip = new JSZip();
         resBlob.forEach(function (obj) {
-            const name = `${modification}-${/^\d/.test(obj._name)?'part':''}${obj._name}.${getSuffixName(obj.finalUrl || obj.media)}`
+            const name = `${modification}${obj._lastName}`
             zip.file(name, obj._blob);
         });
         return new Promise(async (resolve, rejcet) => {
@@ -271,17 +345,18 @@
         var content = text;
 
         var _blob = new Blob([content], {
-            type: "text/plain;charset=utf-8"
+            type: "text/plain;charset=utf-8",
         });
+
         return {
             _blob,
-            _name: 'text',
+            _lastName: '.txt',
             finalUrl: 'https://github.com/wah0713/text.txt'
         }
     }
 
     // 下载流
-    function getFileBlob(url, _name, options) {
+    function getFileBlob(url, _lastName, options) {
         return new Promise((resolve, rejcet) => {
             GM_xmlhttpRequest({
                 url,
@@ -297,7 +372,7 @@
                     resolve({
                         ...res,
                         _blob: res.response,
-                        _name
+                        _lastName
                     })
                 },
                 onerror: (res) => {
@@ -345,7 +420,7 @@
 
     // 下载视频
     async function DownLoadMedia(href, urlData, text) {
-        const mediaRes = await getFileBlob(urlData.media, 'media', {
+        const mediaRes = await getFileBlob(urlData.media, `.${getSuffixName(urlData.media)}`, {
             onprogress: (res) => {
                 const {
                     loaded,
@@ -360,19 +435,15 @@
                 data[href].message = `中${formatNumber(completedQuantity / 1024/ 1024)}/${formatNumber(total / 1024/ 1024)}M（${formatNumber(percentage)}%）`
             }
         })
-
-        if (text) {
-            const content = await pack([{
-                _name: 'media',
-                ...mediaRes,
-            }, getTextBlob(text)], data[href].title)
+        if (!mediaRes._blob) {
+            return false
+        } else if (text) {
+            const content = await pack([mediaRes, getTextBlob(text)], data[href].title)
             download(URL.createObjectURL(content), `${data[href].title}.zip`)
-            return true
         } else {
-            download(URL.createObjectURL(mediaRes._blob), `${data[href].title}.${getSuffixName(urlData.media)}`)
-            return true
+            download(URL.createObjectURL(mediaRes._blob), `${data[href].title}${mediaRes._lastName}`)
         }
-        return false
+        return true
     }
 
     // 下载（默认）
@@ -391,15 +462,16 @@
             }
         }))
 
-        if (text) {
-            promiseList.push(getTextBlob(text))
-        }
+        if (promiseList.length === 0) return false
 
         const imageRes = await Promise.all(promiseList)
 
+        if (text) {
+            imageRes.push(getTextBlob(text))
+        }
+
         if (imageRes.length === 1) {
-            download(URL.createObjectURL(imageRes[0]._blob), `${data[href].title}.${getSuffixName(imageRes[0].finalUrl)}`)
-            return true
+            download(URL.createObjectURL(imageRes[0]._blob), `${data[href].title}${imageRes[0]._lastName}`)
         } else {
             const content = await pack(imageRes.filter(item => !isEmptyFile(item)), data[href].title)
             download(URL.createObjectURL(content), `${data[href].title}.zip`)
@@ -467,6 +539,7 @@
             // 下载（默认）
             isSuccess = await DownLoadDefault(href, urlData, urlArr, text)
         }
+
         if (isSuccess) {
             // 下载成功
             data[href].message = message.finish
@@ -555,42 +628,6 @@
 
         main(href, urlData, text)
     })
-
-    function getFileName({
-        time,
-        userName,
-        regionName,
-        geo,
-        text
-    }) {
-        let title = `${userName} ${time}`
-
-        // 是否下载名中显示IP区域
-        if (regionName && config.isShowRegion.value) {
-            const region = regionName.match(/\s(.*)/) && RegExp.$1
-            if (region) {
-                title += ' ' + region
-            }
-        }
-
-        // 下载名中显示微博文本(前20字)
-        if (config.isNameIncludesText.value) {
-            title += ' ' + text.slice(0, 20)
-        }
-
-        // 下载名中显示定位
-        const geoName = get(geo, 'detail.title', null)
-        if (geoName && config.isShowGeo.value) {
-            title += ' ' + geoName
-        }
-
-        // 替换下载名中空格为下划线【_】(方便文件搜索)
-        if (config.isFilterUserNames.value) {
-            title = title.replace(/\s/g, '_')
-        }
-
-        return title
-    }
 
     $('.showMessage').on('click', '.downloadBtn', async function (event) {
         if (event.target.className !== event.currentTarget.className || ![message.isEmptyError, message.finish, undefined, ''].includes(gettextDom(this))) return false
