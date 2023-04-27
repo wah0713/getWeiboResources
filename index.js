@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         微博一键下载（9宫格&&视频）
 // @namespace    https://github.com/wah0713/getWeiboResources
-// @version      1.8.1
+// @version      1.8.2
 // @description  一个兴趣使然的脚本，微博一键下载脚本。傻瓜式-简单、易用、可靠
 // @supportURL   https://github.com/wah0713/getWeiboResources/issues
 // @updateURL    https://greasyfork.org/scripts/454816/code/download.user.js
@@ -32,6 +32,7 @@
 // @grant        GM_unregisterMenuCommand
 // @grant        GM_xmlhttpRequest
 // @grant        unsafeWindow
+// @note         23-04-27 1.8.2 图片更换高清图源
 // ==/UserScript==
 
 (async function () {
@@ -186,64 +187,39 @@
         // 图片
         if (pic_infos) {
             const arr = [...Object.keys(pic_infos)]
-            if (arr.length === 1) {
-                const ele = arr[0]
-                const url = get(pic_infos[ele], 'mw2000.url', '')
-                urlData[`.${getSuffixName(url)}`] = url
+            arr.forEach((ele, index) => {
+                const afterName = arr.length === 1 ? '' : `-part${formatNumber(index + 1)}`
+
+                const url = `https://weibo.com/ajax/common/download?pid=${ele}`
+                urlData[`${afterName}.${getSuffixName(get(pic_infos[ele], 'mw2000.url', ''))}`] = url
 
                 if (pic_infos[ele].type === 'livephoto') {
                     const url = get(pic_infos[ele], 'video', '')
-                    urlData[`.${getSuffixName(url)}`] = url
+                    urlData[`${afterName}.${getSuffixName(url)}`] = url
                 }
-            } else {
-                arr.forEach((ele, index) => {
-                    const url = get(pic_infos[ele], 'mw2000.url', '')
-                    urlData[`-part${formatNumber(index + 1)}.${getSuffixName(url)}`] = url
-
-                    if (pic_infos[ele].type === 'livephoto') {
-                        const url = get(pic_infos[ele], 'video', '')
-                        urlData[`-part${formatNumber(index + 1)}.${getSuffixName(url)}`] = url
-                    }
-                })
-            }
+            })
         }
 
         // 图片加视频
         if (mix_media_info) {
-            if (mix_media_info.items === 1) {
-                const ele = mix_media_info.items[0]
+            mix_media_info.items.forEach((ele, index) => {
+                const afterName = mix_media_info.items.length === 1 ? '' : `-part${formatNumber(index + 1)}`
+
                 let imgUrl = null
                 let mediaUrl = null
                 if (ele.type === "video") {
-                    imgUrl = get(ele, 'data.pic_info.pic_big.url', '').replace(/(?<=.\w+\/)[a-z\d]+/, 'mw2000')
+                    imgUrl = get(ele, 'data.pic_info.pic_big.url', '')
                     mediaUrl = get(ele, 'data.media_info.mp4_sd_url', '')
                 } else {
                     imgUrl = get(ele, 'data.mw2000.url', '')
                 }
 
-                urlData[`.${getSuffixName(imgUrl)}`] = imgUrl
+                urlData[`${afterName}.${getSuffixName(imgUrl)}`] = `https://weibo.com/ajax/common/download?pid=${imgUrl.match(/([\w|\d]+)(?=\.\w+$)/)&& RegExp.$1}`
 
                 if (mediaUrl) {
-                    urlData[`.${getSuffixName(mediaUrl)}`] = mediaUrl
+                    urlData[`${afterName}.${getSuffixName(mediaUrl)}`] = mediaUrl
                 }
-            } else {
-                mix_media_info.items.forEach((ele, index) => {
-                    let imgUrl = null
-                    let mediaUrl = null
-                    if (ele.type === "video") {
-                        imgUrl = get(ele, 'data.pic_info.pic_big.url', '').replace(/(?<=.\w+\/)[a-z\d]+/, 'mw2000')
-                        mediaUrl = get(ele, 'data.media_info.mp4_sd_url', '')
-                    } else {
-                        imgUrl = get(ele, 'data.mw2000.url', '')
-                    }
-
-                    urlData[`-part${formatNumber(index + 1)}.${getSuffixName(imgUrl)}`] = imgUrl
-
-                    if (mediaUrl) {
-                        urlData[`-part${formatNumber(index + 1)}.${getSuffixName(mediaUrl)}`] = mediaUrl
-                    }
-                })
-            }
+            })
         }
 
         // 视频
