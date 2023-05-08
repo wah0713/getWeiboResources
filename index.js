@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         微博一键下载（9宫格&&视频）
 // @namespace    https://github.com/wah0713/getWeiboResources
-// @version      1.8.2
+// @version      1.8.3
 // @description  一个兴趣使然的脚本，微博一键下载脚本。傻瓜式-简单、易用、可靠
 // @supportURL   https://github.com/wah0713/getWeiboResources/issues
 // @updateURL    https://greasyfork.org/scripts/454816/code/download.user.js
@@ -32,7 +32,6 @@
 // @grant        GM_unregisterMenuCommand
 // @grant        GM_xmlhttpRequest
 // @grant        unsafeWindow
-// @note         23-04-27 1.8.2 图片更换高清图源
 // ==/UserScript==
 
 (async function () {
@@ -169,6 +168,7 @@
             region_name,
             geo,
             created_at,
+            mblog_vip_type,
             user: {
                 screen_name
             }
@@ -190,8 +190,15 @@
             arr.forEach((ele, index) => {
                 const afterName = arr.length === 1 ? '' : `-part${formatNumber(index + 1)}`
 
-                const url = `https://weibo.com/ajax/common/download?pid=${ele}`
-                urlData[`${afterName}.${getSuffixName(get(pic_infos[ele], 'mw2000.url', ''))}`] = url
+                let url = `https://weibo.com/ajax/common/download?pid=${ele}`
+                const mw2000Url = get(pic_infos[ele], 'mw2000.url', '')
+
+                // 粉丝专属
+                if (mblog_vip_type === 1) {
+                    url = mw2000Url
+                }
+
+                urlData[`${afterName}.${getSuffixName(mw2000Url)}`] = url
 
                 if (pic_infos[ele].type === 'livephoto') {
                     const url = get(pic_infos[ele], 'video', '')
@@ -283,9 +290,9 @@
             title += ' ' + geoName
         }
 
-        // 替换下载名中空格为下划线【_】(方便文件搜索)
-        if (config.isFilterUserNames.value) {
-            title = title.replace(/\s/g, '_')
+        // 替换下载名中【特殊符合】为下划线【_】
+        if (config.isSpecialHandlingName.value) {
+            title = title.replace(/[\<|\>|\\|\/|;|:|\*|\?|\$|\&|\(|\)|\"|\'|#|\|]/g, '_')
         }
 
         return title
@@ -659,6 +666,11 @@
             id: null,
             value: GM_getValue('isNameIncludesText', false)
         },
+        isSpecialHandlingName: {
+            name: '替换下载名中【特殊符合】为下划线【_】',
+            id: null,
+            value: GM_getValue('isSpecialHandlingName', false)
+        },
         isAutoHide: {
             name: '左侧消息自动消失',
             id: null,
@@ -668,11 +680,6 @@
             name: '左侧消息过滤【已经完成】',
             id: null,
             value: GM_getValue('isShowActive', false)
-        },
-        isFilterUserNames: {
-            name: '替换下载名中空格为下划线【_】(方便文件搜索)',
-            id: null,
-            value: GM_getValue('isFilterUserNames', false)
         },
         isIncludesText: {
             name: '下载文件中包含微博文本',
