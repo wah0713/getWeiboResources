@@ -667,7 +667,7 @@
             value: GM_getValue('isNameIncludesText', false)
         },
         isSpecialHandlingName: {
-            name: '替换下载名中【特殊符合】为下划线【_】',
+            name: '替换下载名中【特殊符号】为下划线【_】',
             id: null,
             value: GM_getValue('isSpecialHandlingName', false)
         },
