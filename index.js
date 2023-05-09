@@ -61,6 +61,7 @@
     let isFirst = GM_getValue('isFirst', true)
     // 是否开启dubug模式
     let isDebug = false
+
     let timer = null
     // 消息
     const message = {
@@ -279,20 +280,20 @@
             }
         }
 
-        // 下载名中显示微博文本(前20字)
-        if (config.isNameIncludesText.value) {
-            title += ' ' + text.slice(0, 20)
-        }
-
         // 下载名中显示定位
         const geoName = get(geo, 'detail.title', null)
         if (geoName && config.isShowGeo.value) {
             title += ' ' + geoName
         }
 
-        // 替换下载名中【特殊符合】为下划线【_】
+        // 下载名中显示微博文本(前20字)
+        if (config.isNameIncludesText.value) {
+            title += ' ' + text.slice(0, 20)
+        }
+
+        // 替换下载名中【特殊符号】为下划线【_】
         if (config.isSpecialHandlingName.value) {
-            title = title.replace(/[\<|\>|\\|\/|;|:|\*|\?|\$|\&|\(|\)|\"|\'|#|\|]/g, '_')
+            title = title.replace(/[\<|\>|\\|\/|;|:|\*|\?|\$|@|\&|\(|\)|\"|\'|#|\|]/g, '_')
         }
 
         return title
