@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         微博一键下载（9宫格&&视频）
 // @namespace    https://github.com/wah0713/getWeiboResources
-// @version      1.8.3
+// @version      1.8.4
 // @description  一个兴趣使然的脚本，微博一键下载脚本。傻瓜式-简单、易用、可靠
 // @supportURL   https://github.com/wah0713/getWeiboResources/issues
 // @updateURL    https://greasyfork.org/scripts/454816/code/download.user.js
@@ -247,7 +247,7 @@
 
     // 判断为空图片
     function isEmptyFile(res) {
-        if (res.finalUrl.endsWith('gif#101')) {
+        if (res.finalUrl.endsWith('gif#101') || res._blob.size === 191) {
             return true
         }
         return false
@@ -448,16 +448,18 @@
 
         if (promiseList.length === 0) return false
 
-        const imageRes = await Promise.all(promiseList)
+        let imageRes = await Promise.all(promiseList)
 
         if (text) {
             imageRes.push(getTextBlob(text))
         }
 
+        imageRes = imageRes.filter(item => !isEmptyFile(item));
+
         if (imageRes.length === 1) {
             download(URL.createObjectURL(imageRes[0]._blob), `${data[href].title}${imageRes[0]._lastName}`)
-        } else {
-            const content = await pack(imageRes.filter(item => !isEmptyFile(item)), data[href].title)
+        } else if (imageRes.length > 1) {
+            const content = await pack(imageRes, data[href].title)
             download(URL.createObjectURL(content), `${data[href].title}.zip`)
         }
         return true
