@@ -166,6 +166,7 @@
             pic_infos,
             mix_media_info,
             text_raw,
+            isLongText,
             region_name,
             geo,
             created_at,
@@ -239,6 +240,7 @@
             urlData,
             time,
             geo,
+            isLongText,
             text: text_raw,
             regionName: region_name,
             userName: screen_name,
@@ -247,7 +249,9 @@
 
     // 判断为空图片
     function isEmptyFile(res) {
-        if (res.finalUrl.endsWith('gif#101') || res._blob.size === 191) {
+        const size = get(res, '_blob.size', 0)
+        const finalUrl = get(res, 'finalUrl', '')
+        if (finalUrl.endsWith('gif#101') || size === 191) {
             return true
         }
         return false
@@ -325,10 +329,17 @@
     }
 
     // 下载流（文本）
-    function getTextBlob(text) {
-        var content = text;
+    async function getTextBlob({
+        text,
+        href,
+        isLongText
+    }) {
+        let content = text;
+        if (isLongText) {
+            content = await getLongtextById(href.match(/(?<=\d+\/)(\w+)/) && RegExp.$1) || text
+        }
 
-        var _blob = new Blob([content], {
+        const _blob = new Blob([content], {
             type: "text/plain;charset=utf-8",
         });
 
@@ -351,7 +362,7 @@
                     'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/106.0.0.0 Safari/537.36'
                 },
                 onload: (res) => {
-                    isDebug && console.log(`getFileBlob-onload`, res)
+                    isDebug && console.log(`下载流-onload`, res)
                     options.callback && options.callback()
                     resolve({
                         ...res,
@@ -360,7 +371,7 @@
                     })
                 },
                 onerror: (res) => {
-                    isDebug && console.log(`getFileBlob-onerror`, res)
+                    isDebug && console.log(`下载流-onerror`, res)
                     resolve(null)
                 },
                 onprogress: (res) => {
@@ -377,7 +388,7 @@
                 url: `https://weibo.com/ajax/statuses/show?id=${id}`,
                 responseType: 'json',
                 onload: (res) => {
-                    isDebug && console.log(`getInfoById-onload`, res)
+                    isDebug && console.log(`通过id获取链接-onload`, res)
                     const response = res.response
                     response.topMedia = ''
                     try {
@@ -395,7 +406,26 @@
                     resolve(response)
                 },
                 onerror: (res) => {
-                    isDebug && console.log(`getInfoById-onerror`, res)
+                    isDebug && console.log(`通过id获取链接-onerror`, res)
+                    resolve(null)
+                }
+            })
+        })
+    }
+
+    // 通过id获取长文
+    function getLongtextById(id) {
+        return new Promise((resolve, rejcet) => {
+            GM_xmlhttpRequest({
+                url: `https://weibo.com/ajax/statuses/longtext?id=${id}`,
+                responseType: 'json',
+                onload: (res) => {
+                    isDebug && console.log(`通过id获取长文-onload`, res)
+                    const response = res.response
+                    resolve(response.data.longTextContent)
+                },
+                onerror: (res) => {
+                    isDebug && console.log(`通过id获取长文-onerror`, res)
                     resolve(null)
                 }
             })
@@ -403,7 +433,12 @@
     }
 
     // 下载视频
-    async function DownLoadMedia(href, urlData, text) {
+    async function DownLoadMedia({
+        href,
+        urlData,
+        text,
+        isLongText
+    }) {
         const mediaRes = await getFileBlob(urlData.media, `.${getSuffixName(urlData.media)}`, {
             onprogress: (res) => {
                 const {
@@ -422,7 +457,12 @@
         if (!mediaRes._blob) {
             return false
         } else if (text) {
-            const content = await pack([mediaRes, getTextBlob(text)], data[href].title)
+            const content = await pack([mediaRes, await getTextBlob({
+                text,
+                href,
+                isLongText
+            })], data[href].title)
+
             download(URL.createObjectURL(content), `${data[href].title}.zip`)
         } else {
             download(URL.createObjectURL(mediaRes._blob), `${data[href].title}${mediaRes._lastName}`)
@@ -431,7 +471,13 @@
     }
 
     // 下载（默认）
-    async function DownLoadDefault(href, urlData, urlArr, text = '') {
+    async function DownLoadDefault({
+        href,
+        urlData,
+        urlArr,
+        text = '',
+        isLongText
+    }) {
         const total = urlArr.length
         data[href].total = total
         const promiseList = urlArr.map((item) => getFileBlob(urlData[item], item, {
@@ -451,7 +497,11 @@
         let imageRes = await Promise.all(promiseList)
 
         if (text) {
-            imageRes.push(getTextBlob(text))
+            imageRes.push(await getTextBlob({
+                text,
+                href,
+                isLongText
+            }))
         }
 
         imageRes = imageRes.filter(item => !isEmptyFile(item));
@@ -504,7 +554,12 @@
         }, object) || defaultVal;
     }
 
-    async function main(href, urlData, text) {
+    async function main({
+        href,
+        urlData,
+        text,
+        isLongText
+    }) {
         const urlArr = Object.keys(urlData);
         if (urlArr.length <= 0) {
             // 没有资源
@@ -520,10 +575,21 @@
 
         if (urlArr.length === 1 && urlArr[0] === 'media') {
             // 下载视频
-            isSuccess = await DownLoadMedia(href, urlData, text)
+            isSuccess = await DownLoadMedia({
+                href,
+                urlData,
+                text,
+                isLongText
+            })
         } else {
             // 下载（默认）
-            isSuccess = await DownLoadDefault(href, urlData, urlArr, text)
+            isSuccess = await DownLoadDefault({
+                href,
+                urlData,
+                urlArr,
+                text,
+                isLongText
+            })
         }
 
         if (isSuccess) {
@@ -585,6 +651,7 @@
         data[href] = {
             urlData: {},
             text: '',
+            isLongText: false,
             title: '',
             name: href,
             total: 0,
@@ -598,7 +665,8 @@
             userName,
             regionName,
             geo,
-            text
+            text,
+            isLongText,
         } = await getfileUrlByInfo(this)
 
         data[href].title = getFileName({
@@ -610,9 +678,15 @@
         })
         data[href].urlData = urlData
         data[href].text = text
+        data[href].isLongText = isLongText
         data[href].message = message.getReady
 
-        main(href, urlData, text)
+        main({
+            href,
+            urlData,
+            text,
+            isLongText
+        })
     })
 
     $('.showMessage').on('click', '.downloadBtn', async function (event) {
@@ -622,7 +696,12 @@
         data[href].completedQuantity = 0
         data[href].message = message.getReady
 
-        main(href, data[href].urlData, data[href].text)
+        main({
+            href,
+            urlData: data[href].urlData,
+            text: data[href].text,
+            isLongText: data[href].isLongText,
+        })
     })
 
     $('#wah0713 .container .input-box input').change(event => {
