@@ -67,6 +67,7 @@
     const message = {
         getReady: '准备中',
         isEmptyError: '失败，未找到资源',
+        isM3u8Error: '失败，m3u8资源解析失败',
         isUnkownError: '失败，未知错误',
         finish: '完成'
     }
@@ -163,6 +164,7 @@
         const id = $(dom).children('a').attr('href').match(/(?<=\d+\/)(\w+)/) && RegExp.$1
         const {
             topMedia,
+            isM3u8,
             pic_infos,
             mix_media_info,
             text_raw,
@@ -223,7 +225,7 @@
                     imgUrl = get(ele, 'data.mw2000.url', '')
                 }
 
-                urlData[`${afterName}.${getSuffixName(imgUrl)}`] = `https://weibo.com/ajax/common/download?pid=${imgUrl.match(/([\w|\d]+)(?=\.\w+$)/)&& RegExp.$1}`
+                urlData[`${afterName}.${getSuffixName(imgUrl)}`] = `https://weibo.com/ajax/common/download?pid=${imgUrl.match(/([\w]+)(?=\.\w+$)/)&& RegExp.$1}`
 
                 if (mediaUrl) {
                     urlData[`${afterName}.${getSuffixName(mediaUrl)}`] = mediaUrl
@@ -238,6 +240,7 @@
 
         return {
             urlData,
+            isM3u8,
             time,
             geo,
             isLongText,
@@ -400,7 +403,13 @@
 
                         // 视频
                         if (res.response.page_info) {
-                            response.topMedia = get(res.response, 'page_info.media_info.playback_list[0].play_info.url', get(res.response, 'page_info.media_info.stream_url', ''))
+                            const {
+                                isM3u8,
+                                url
+                            } = handleMedia(res)
+
+                            response.topMedia = url
+                            response.isM3u8 = isM3u8
                         }
                     } catch (error) {}
                     resolve(response)
@@ -411,6 +420,23 @@
                 }
             })
         })
+    }
+
+    function handleMedia(res) {
+        const objectType = get(res.response, 'page_info.object_type', '')
+        if (objectType === 'live') return {
+            isM3u8: true,
+            url: ''
+        }
+        const url = get(res.response, 'page_info.media_info.playback_list[0].play_info.url', get(res.response, 'page_info.media_info.stream_url', ''))
+        if (new URL(url).pathname.match(/([\w]+)$/) && RegExp.$1 === 'm3u8') return {
+            isM3u8: true,
+            url: ''
+        }
+        return {
+            isM3u8: false,
+            url
+        }
     }
 
     // 通过id获取长文
@@ -527,11 +553,6 @@
         $(dom).attr('show-text', text)
     }
 
-    // 获取dom文本
-    function gettextDom(dom) {
-        return $(dom).attr('show-text')
-    }
-
     /**
      * object: 对象
      * path: 输入的路径
@@ -560,6 +581,12 @@
         text,
         isLongText
     }) {
+
+        if (data[href].isM3u8) {
+            data[href].message = message.isM3u8Error
+            return false
+        }
+
         const urlArr = Object.keys(urlData);
         if (urlArr.length <= 0) {
             // 没有资源
@@ -637,7 +664,9 @@
     }
 
     $cardList.on('click', `${cardHeadStr}:not(.Feed_retweetHeadInfo_Tl4Ld)`, async function (event) {
-        if (event.target.className !== event.currentTarget.className || ![message.isEmptyError, message.finish, undefined, ''].includes(gettextDom(this))) return false
+        if (event.target.className !== event.currentTarget.className || ![message.isEmptyError, message.isM3u8Error, message.finish, undefined, ''].includes(
+                $(this).attr('show-text')
+            )) return false
 
         // 关闭第一次使用提示
         if (isFirst) {
@@ -651,6 +680,7 @@
         data[href] = {
             urlData: {},
             text: '',
+            isM3u8: false, // m3u8资源
             isLongText: false,
             title: '',
             name: href,
@@ -661,6 +691,7 @@
 
         const {
             urlData,
+            isM3u8,
             time,
             userName,
             regionName,
@@ -680,6 +711,7 @@
         data[href].text = text
         data[href].isLongText = isLongText
         data[href].message = message.getReady
+        data[href].isM3u8 = isM3u8
 
         main({
             href,
@@ -690,7 +722,7 @@
     })
 
     $('.showMessage').on('click', '.downloadBtn', async function (event) {
-        if (event.target.className !== event.currentTarget.className || ![message.isEmptyError, message.finish, undefined, ''].includes(gettextDom(this))) return false
+        if (event.target.className !== event.currentTarget.className || ![message.isEmptyError, message.isM3u8Error, message.finish, undefined, ''].includes($(this).text().replace(/^下载/, ''))) return false
         const href = $(this).data('href')
 
         data[href].completedQuantity = 0
