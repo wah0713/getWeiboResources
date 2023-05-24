@@ -22,6 +22,7 @@
 // @connect      youku.com
 // @connect      weibo.com
 // @connect      cibntv.net
+// @connect      cache.m.iqiyi.com
 // @connect      *
 // @noframes     true
 // @run-at       document-idle
@@ -394,6 +395,7 @@
                     isDebug && console.log(`getInfoById-onload`, res)
                     const response = res.response
                     response.topMedia = ''
+
                     try {
                         // retweeted_status 为转发
                         if (res.response.retweeted_status) {
@@ -430,7 +432,7 @@
             url: ''
         }
         const url = get(res.response, 'page_info.media_info.playback_list[0].play_info.url', get(res.response, 'page_info.media_info.stream_url', ''))
-        if (new URL(url).pathname.match(/([\w]+)$/) && RegExp.$1 === 'm3u8') return {
+        if (url.match(/[^\w](m3u8)[^\w]/) && RegExp.$1 === 'm3u8') return {
             isM3u8: true,
             url: ''
         }
@@ -831,7 +833,7 @@
    body{--yellow:#ff8200}.head-info_info_2AspQ:not(.Feed_retweetHeadInfo_Tl4Ld):after,div.card-feed div.from:after{content:"下载" attr(show-text);color:var(--yellow);cursor:pointer;float:right}.main-full.isFirst div.card-feed div.from:after,.Main_full_1dfQX.isFirst .head-info_info_2AspQ:not(.Feed_retweetHeadInfo_Tl4Ld):after{animation:wobble 1s infinite alternate}@keyframes wobble{0%{-webkit-transform:translateZ(0);transform:translateZ(0)}15%{-webkit-transform:translate3d(-25%,0,0) rotate(-5deg);transform:translate3d(-25%,0,0) rotate(-5deg)}30%{-webkit-transform:translate3d(20%,0,0) rotate(3deg);transform:translate3d(20%,0,0) rotate(3deg)}45%{-webkit-transform:translate3d(-15%,0,0) rotate(-3deg);transform:translate3d(-15%,0,0) rotate(-3deg)}60%{-webkit-transform:translate3d(10%,0,0) rotate(2deg);transform:translate3d(10%,0,0) rotate(2deg)}75%{-webkit-transform:translate3d(-5%,0,0) rotate(-1deg);transform:translate3d(-5%,0,0) rotate(-1deg)}to{-webkit-transform:translateZ(0);transform:translateZ(0)}}.Frame_content_3XrxZ #wah0713,.m-main #wah0713{font-size:12px;font-weight:700}.Frame_content_3XrxZ #wah0713.out,.m-main #wah0713.out{opacity:0}.Frame_content_3XrxZ #wah0713.out:hover,.m-main #wah0713.out:hover{opacity:1}.Frame_content_3XrxZ #wah0713 .container,.m-main #wah0713 .container{position:fixed;left:0;z-index:1}.Frame_content_3XrxZ #wah0713:hover .input-box,.m-main #wah0713:hover .input-box{display:block}.Frame_content_3XrxZ #wah0713 input,.m-main #wah0713 input{width:3em;color:var(--yellow);border-width:1px;outline:0;background-color:transparent}.Frame_content_3XrxZ #wah0713 .input-box,.m-main #wah0713 .input-box{display:none}.Frame_content_3XrxZ #wah0713 .showMessage>p,.m-main #wah0713 .showMessage>p{line-height:16px;margin:4px}.Frame_content_3XrxZ #wah0713 .showMessage>p span,.m-main #wah0713 .showMessage>p span{color:#333}.Frame_content_3XrxZ #wah0713 .showMessage>p span.red,.m-main #wah0713 .showMessage>p span.red{color:var(--yellow);vertical-align:top}.Frame_content_3XrxZ #wah0713 .showMessage>p span.red.downloadBtn,.m-main #wah0713 .showMessage>p span.red.downloadBtn{cursor:pointer}.Frame_content_3XrxZ #wah0713 .showMessage>p a,.m-main #wah0713 .showMessage>p a{color:#333;overflow:hidden;text-overflow:ellipsis;max-width:300px;display:inline-block;white-space:nowrap}.Frame_content_3XrxZ #wah0713 .showMessage>p a:hover,.m-main #wah0713 .showMessage>p a:hover{text-decoration:none}
           `)
 
-    // // debugJS
-    // isDebug = true
-    // unsafeWindow.$ = $
+    // debugJS
+    isDebug = true
+    unsafeWindow.$ = $
 })()
