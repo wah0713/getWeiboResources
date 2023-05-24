@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         微博一键下载（9宫格&&视频）
 // @namespace    https://github.com/wah0713/getWeiboResources
-// @version      1.8.5
+// @version      1.8.6
 // @description  一个兴趣使然的脚本，微博一键下载脚本。傻瓜式-简单、易用、可靠
 // @supportURL   https://github.com/wah0713/getWeiboResources/issues
 // @updateURL    https://greasyfork.org/scripts/454816/code/download.user.js
@@ -160,7 +160,7 @@
     }
 
     // 获取资源链接
-    async function getfileUrlByInfo(dom) {
+    async function getFileUrlByInfo(dom) {
         const id = $(dom).children('a').attr('href').match(/(?<=\d+\/)(\w+)/) && RegExp.$1
         const {
             topMedia,
@@ -365,7 +365,7 @@
                     'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/106.0.0.0 Safari/537.36'
                 },
                 onload: (res) => {
-                    isDebug && console.log(`下载流-onload`, res)
+                    isDebug && console.log(`getFileBlob-onload`, res)
                     options.callback && options.callback()
                     resolve({
                         ...res,
@@ -374,7 +374,7 @@
                     })
                 },
                 onerror: (res) => {
-                    isDebug && console.log(`下载流-onerror`, res)
+                    console.error(`getFileBlob-onerror`, res)
                     resolve(null)
                 },
                 onprogress: (res) => {
@@ -391,7 +391,7 @@
                 url: `https://weibo.com/ajax/statuses/show?id=${id}`,
                 responseType: 'json',
                 onload: (res) => {
-                    isDebug && console.log(`通过id获取链接-onload`, res)
+                    isDebug && console.log(`getInfoById-onload`, res)
                     const response = res.response
                     response.topMedia = ''
                     try {
@@ -415,7 +415,7 @@
                     resolve(response)
                 },
                 onerror: (res) => {
-                    isDebug && console.log(`通过id获取链接-onerror`, res)
+                    console.error(`getInfoById-onerror`, res)
                     resolve(null)
                 }
             })
@@ -447,12 +447,12 @@
                 url: `https://weibo.com/ajax/statuses/longtext?id=${id}`,
                 responseType: 'json',
                 onload: (res) => {
-                    isDebug && console.log(`通过id获取长文-onload`, res)
+                    isDebug && console.log(`getLongtextById-onload`, res)
                     const response = res.response
                     resolve(response.data.longTextContent)
                 },
                 onerror: (res) => {
-                    isDebug && console.log(`通过id获取长文-onerror`, res)
+                    console.error(`getLongtextById-onerror`, res)
                     resolve(null)
                 }
             })
@@ -481,7 +481,8 @@
                 data[href].message = `中${formatNumber(completedQuantity / 1024/ 1024)}/${formatNumber(total / 1024/ 1024)}M（${formatNumber(percentage)}%）`
             }
         })
-        if (!mediaRes._blob) {
+
+        if (!get(mediaRes, '_blob', null)) {
             return false
         } else if (text) {
             const content = await pack([mediaRes, await getTextBlob({
@@ -522,6 +523,10 @@
         if (promiseList.length === 0) return false
 
         let imageRes = await Promise.all(promiseList)
+
+        if (imageRes.some(item => item === null)) {
+            return false
+        }
 
         if (text) {
             imageRes.push(await getTextBlob({
@@ -665,7 +670,7 @@
     }
 
     $cardList.on('click', `${cardHeadStr}:not(.Feed_retweetHeadInfo_Tl4Ld)`, async function (event) {
-        if (event.target.className !== event.currentTarget.className || ![message.isEmptyError, message.isM3u8Error, message.finish, undefined, ''].includes(
+        if (event.target.className !== event.currentTarget.className || ![...Object.values(message).filter(item => item !== message.getReady), undefined, ''].includes(
                 $(this).attr('show-text')
             )) return false
 
@@ -699,7 +704,7 @@
             geo,
             text,
             isLongText,
-        } = await getfileUrlByInfo(this)
+        } = await getFileUrlByInfo(this)
 
         data[href].title = getFileName({
             time,
@@ -723,7 +728,7 @@
     })
 
     $('.showMessage').on('click', '.downloadBtn', async function (event) {
-        if (event.target.className !== event.currentTarget.className || ![message.isEmptyError, message.isM3u8Error, message.finish, undefined, ''].includes($(this).text().replace(/^下载/, ''))) return false
+        if (event.target.className !== event.currentTarget.className || ![...Object.values(message).filter(item => item !== message.getReady), undefined, ''].includes($(this).text().replace(/^下载/, ''))) return false
         const href = $(this).data('href')
 
         data[href].completedQuantity = 0
