@@ -49,5 +49,5 @@
 
 这个脚本是工作之余，自己<del>低级程序员</del>练练手，所以也不要有太多期待。
 <!-- weibo/wb -->
-[1.9.0]:https://s1.ax1x.com/2023/05/25/p9bA0bt.png
+[1.9.0]:https://s1.ax1x.com/2023/05/25/p9bVU0I.png
 [1.8.0]:https://s1.ax1x.com/2023/04/15/p9SXVEj.png
