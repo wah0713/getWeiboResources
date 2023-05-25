@@ -500,7 +500,6 @@
             parser.push(await blobToText(mediaRes._blob));
             parser.end();
 
-
             const urlArr = parser.manifest.segments.map(item => {
                 let url
                 try {
