@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         微博一键下载（9宫格&&视频）
 // @namespace    https://github.com/wah0713/getWeiboResources
-// @version      1.8.6
+// @version      1.9.0
 // @description  一个兴趣使然的脚本，微博一键下载脚本。傻瓜式-简单、易用、可靠
 // @supportURL   https://github.com/wah0713/getWeiboResources/issues
 // @updateURL    https://greasyfork.org/scripts/454816/code/download.user.js
@@ -11,6 +11,7 @@
 // @icon         https://weibo.com/favicon.ico
 // @require      https://cdn.bootcss.com/jquery/1.12.4/jquery.min.js
 // @require      https://cdn.bootcss.com/jszip/3.1.5/jszip.min.js
+// @require      https://cdn.bootcdn.net/ajax/libs/m3u8-parser/6.0.0/m3u8-parser.min.js
 // @match        *://weibo.com/*
 // @match        *://*.weibo.com/*
 // @match        *://t.cn/*
@@ -22,6 +23,7 @@
 // @connect      youku.com
 // @connect      weibo.com
 // @connect      cibntv.net
+// @connect      data.video.iqiyi.com
 // @connect      cache.m.iqiyi.com
 // @connect      *
 // @noframes     true
@@ -68,7 +70,7 @@
     const message = {
         getReady: '准备中',
         isEmptyError: '失败，未找到资源',
-        isM3u8Error: '失败，m3u8资源解析失败',
+        isLiveError: '失败，直播资源解析失败',
         isUnkownError: '失败，未知错误',
         finish: '完成'
     }
@@ -164,8 +166,8 @@
     async function getFileUrlByInfo(dom) {
         const id = $(dom).children('a').attr('href').match(/(?<=\d+\/)(\w+)/) && RegExp.$1
         const {
+            isLive,
             topMedia,
-            isM3u8,
             pic_infos,
             mix_media_info,
             text_raw,
@@ -240,8 +242,8 @@
         }
 
         return {
+            isLive,
             urlData,
-            isM3u8,
             time,
             geo,
             isLongText,
@@ -406,12 +408,12 @@
                         // 视频
                         if (res.response.page_info) {
                             const {
-                                isM3u8,
+                                isLive,
                                 url
                             } = handleMedia(res)
 
                             response.topMedia = url
-                            response.isM3u8 = isM3u8
+                            response.isLive = isLive
                         }
                     } catch (error) {}
                     resolve(response)
@@ -427,19 +429,23 @@
     // 视频资源解析
     function handleMedia(res) {
         const objectType = get(res.response, 'page_info.object_type', '')
-        if (objectType === 'live') return {
-            isM3u8: true,
-            url: ''
-        }
         const url = get(res.response, 'page_info.media_info.playback_list[0].play_info.url', get(res.response, 'page_info.media_info.stream_url', ''))
-        if (url.match(/[^\w](m3u8)[^\w]/) && RegExp.$1 === 'm3u8') return {
-            isM3u8: true,
-            url: ''
-        }
         return {
-            isM3u8: false,
+            isLive: objectType === 'live',
             url
         }
+    }
+
+    function blobToText(blob) {
+        return new Promise((resolve, rejcet) => {
+            // 将blob转为text
+            let reader = new FileReader()
+            reader.readAsText(blob, "utf-8")
+            reader.addEventListener("loadend", () => {
+                // text格式
+                resolve(reader.result)
+            })
+        })
     }
 
     // 通过id获取长文
@@ -483,10 +489,54 @@
                 data[href].message = `中${formatNumber(completedQuantity / 1024/ 1024)}/${formatNumber(total / 1024/ 1024)}M（${formatNumber(percentage)}%）`
             }
         })
-
         if (!get(mediaRes, '_blob', null)) {
             return false
-        } else if (text) {
+        }
+
+        if (!get(mediaRes, '_blob.type', '').startsWith('video')) {
+            data[href].completedQuantity = 0
+            const parser = new m3u8Parser.Parser();
+
+            parser.push(await blobToText(mediaRes._blob));
+            parser.end();
+
+
+            const urlArr = parser.manifest.segments.map(item => {
+                let url
+                try {
+                    new URL(item.uri)
+                    url = item.uri
+                } catch (error) {
+                    url = `${new URL(urlData.media).origin}/${item.uri}`
+                }
+                return url
+            });
+
+            const total = urlArr.length
+            const blobArr = []
+            for (let i = 0; i < urlArr.length; i++) {
+                const item = urlArr[i];
+                const blobItem = await getFileBlob(item, '', {
+                    callback: () => {
+                        data[href].completedQuantity++
+                        const completedQuantity = data[href].completedQuantity
+
+                        const percentage = new Intl.NumberFormat(undefined, {
+                            maximumFractionDigits: 2
+                        }).format(completedQuantity / total * 100)
+                        data[href].message = `中${completedQuantity}/${total}（${percentage}%）`
+                    }
+                })
+                blobArr[i] = blobItem._blob
+            }
+
+            mediaRes._blob = new Blob(blobArr, {
+                type: 'video/MP2T'
+            })
+            mediaRes._lastName = '.mp4'
+        }
+
+        if (text) {
             const content = await pack([mediaRes, await getTextBlob({
                 text,
                 href,
@@ -590,8 +640,8 @@
         isLongText
     }) {
 
-        if (data[href].isM3u8) {
-            data[href].message = message.isM3u8Error
+        if (data[href].isLive) {
+            data[href].message = message.isLiveError
             return false
         }
 
@@ -688,7 +738,7 @@
         data[href] = {
             urlData: {},
             text: '',
-            isM3u8: false, // m3u8资源
+            isLive: false, // 直播资源
             isLongText: false,
             title: '',
             name: href,
@@ -699,7 +749,7 @@
 
         const {
             urlData,
-            isM3u8,
+            isLive,
             time,
             userName,
             regionName,
@@ -719,7 +769,7 @@
         data[href].text = text
         data[href].isLongText = isLongText
         data[href].message = message.getReady
-        data[href].isM3u8 = isM3u8
+        data[href].isLive = isLive
 
         main({
             href,
