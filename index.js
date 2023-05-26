@@ -473,23 +473,21 @@
     }
 
     // 作者： 沐秋Alron
-    // 链接： https: //juejin.cn/post/7099344493010223134
-    // 来源： 稀土掘金
-    // 著作权归作者所有。 商业转载请联系作者获得授权， 非商业转载请注明出处。
+    // 链接： https://juejin.cn/post/7099344493010223134
     class TaskQueue {
         constructor(num = 10) {
-            this.originMax = num; //原始最大并发数
-            this.max = this.originMax; //最大并发数
-            this.index = 0 //下标
-            this.taskList = [] //用shift方法实现先进先出
-            this.resList = [] //最后返回队列数组
-            this.isError = false
+            this.originMax = num; // 原始最大并发数
+            this.max = this.originMax; // 最大并发数
+            this.index = 0 // 下标
+            this.taskList = [] // 用shift方法实现先进先出
+            this.resList = [] // 最后返回队列数组
+            this.isError = false // 任务失败
         }
 
-        addTask(task, index = null) {
+        addTask(task) {
             this.taskList.push({
                 task,
-                index: index === null ? this.index++ : index
+                index: this.index++
             });
         }
 
@@ -503,9 +501,11 @@
                 if (!length) {
                     return false;
                 }
-                const min = Math.min(length, this.max); // 控制并发数量
+                // 控制并发数量
+                const min = Math.min(length, this.max);
                 for (let i = 0; i < min; i++) {
-                    this.max--; // 开始占用一个任务的空间
+                    // 开始占用一个任务的空间
+                    this.max--;
                     const {
                         task,
                         index
@@ -520,11 +520,14 @@
                         this.resList[index] = res
                     }).finally(async () => {
                         if (this.isError) return false
-                        this.max++; // 任务完成，释放空间
+                        // 任务完成，释放空间
+                        this.max++;
                         if (this.max === this.originMax) {
+                            // 任务完成
                             resolve(this.resList)
                         }
-                        resolve(await this.run()) // 自动进行下一个任务
+                        // 自动进行下一个任务
+                        resolve(await this.run())
                     })
                 }
             })
