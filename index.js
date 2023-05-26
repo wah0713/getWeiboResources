@@ -70,6 +70,7 @@
     const message = {
         getReady: '准备中',
         isEmptyError: '失败，未找到资源',
+        // todo 说不定以后想做直播资源下载
         isLiveError: '失败，直播资源解析失败',
         isUnkownError: '失败，未知错误',
         finish: '完成'
@@ -197,7 +198,9 @@
             arr.forEach((ele, index) => {
                 const afterName = arr.length === 1 ? '' : `-part${formatNumber(index + 1)}`
 
+                // 超高清图源
                 let url = `https://weibo.com/ajax/common/download?pid=${ele}`
+                // 高清图源
                 const mw2000Url = get(pic_infos[ele], 'mw2000.url', '')
 
                 // 粉丝专属
@@ -331,6 +334,7 @@
         a.setAttribute('download', fileName)
         a.click()
         a.remove()
+        // 释放URL
         URL.revokeObjectURL(url)
     }
 
@@ -413,6 +417,7 @@
                             } = handleMedia(res)
 
                             response.topMedia = url
+                            // 直播资源
                             response.isLive = isLive
                         }
                     } catch (error) {}
@@ -467,6 +472,65 @@
         })
     }
 
+    // 作者： 沐秋Alron
+    // 链接： https: //juejin.cn/post/7099344493010223134
+    // 来源： 稀土掘金
+    // 著作权归作者所有。 商业转载请联系作者获得授权， 非商业转载请注明出处。
+    class TaskQueue {
+        constructor(num = 10) {
+            this.originMax = num; //原始最大并发数
+            this.max = this.originMax; //最大并发数
+            this.index = 0 //下标
+            this.taskList = [] //用shift方法实现先进先出
+            this.resList = [] //最后返回队列数组
+            this.isError = false
+        }
+
+        addTask(task, index = null) {
+            this.taskList.push({
+                task,
+                index: index === null ? this.index++ : index
+            });
+        }
+
+        async start() {
+            return await this.run()
+        }
+
+        run() {
+            return new Promise((resolve, rejcet) => {
+                const length = this.taskList.length;
+                if (!length) {
+                    return false;
+                }
+                const min = Math.min(length, this.max); // 控制并发数量
+                for (let i = 0; i < min; i++) {
+                    this.max--; // 开始占用一个任务的空间
+                    const {
+                        task,
+                        index
+                    } = this.taskList.shift();
+
+                    task.then((res) => {
+                        if (res === null) {
+                            // 任意一个失败
+                            this.isError = true
+                            resolve(false)
+                        }
+                        this.resList[index] = res
+                    }).finally(async () => {
+                        if (this.isError) return false
+                        this.max++; // 任务完成，释放空间
+                        if (this.max === this.originMax) {
+                            resolve(this.resList)
+                        }
+                        resolve(await this.run()) // 自动进行下一个任务
+                    })
+                }
+            })
+        }
+    }
+
     // 下载视频
     async function DownLoadMedia({
         href,
@@ -494,9 +558,7 @@
         }
 
         if (!get(mediaRes, '_blob.type', '').startsWith('video')) {
-            data[href].completedQuantity = 0
             const parser = new m3u8Parser.Parser();
-
             parser.push(await blobToText(mediaRes._blob));
             parser.end();
 
@@ -511,11 +573,12 @@
                 return url
             });
 
+            data[href].completedQuantity = 0
             const total = urlArr.length
-            const blobArr = []
-            for (let i = 0; i < urlArr.length; i++) {
-                const item = urlArr[i];
-                const blobItem = await getFileBlob(item, '', {
+
+            const taskQueue = new TaskQueue();
+            urlArr.forEach(item =>
+                taskQueue.addTask(getFileBlob(item, '', {
                     callback: () => {
                         data[href].completedQuantity++
                         const completedQuantity = data[href].completedQuantity
@@ -525,11 +588,15 @@
                         }).format(completedQuantity / total * 100)
                         data[href].message = `中${completedQuantity}/${total}（${percentage}%）`
                     }
-                })
-                blobArr[i] = blobItem._blob
-            }
+                }))
+            )
 
-            mediaRes._blob = new Blob(blobArr, {
+            const taskQueueRes = await taskQueue.start()
+            if (taskQueueRes === false) {
+                // 解析失败
+                return false
+            }
+            mediaRes._blob = new Blob(taskQueueRes.map(item => item._blob), {
                 type: 'video/MP2T'
             })
             mediaRes._lastName = '.mp4'
@@ -559,40 +626,42 @@
     }) {
         const total = urlArr.length
         data[href].total = total
-        const promiseList = urlArr.map((item) => getFileBlob(urlData[item], item, {
-            callback: () => {
-                data[href].completedQuantity++
-                const completedQuantity = data[href].completedQuantity
 
-                const percentage = new Intl.NumberFormat(undefined, {
-                    maximumFractionDigits: 2
-                }).format(completedQuantity / total * 100)
-                data[href].message = `中${completedQuantity}/${total}（${percentage}%）`
-            }
-        }))
+        const taskQueue = new TaskQueue(3);
+        urlArr.forEach(item =>
+            taskQueue.addTask(getFileBlob(urlData[item], item, {
+                callback: () => {
+                    data[href].completedQuantity++
+                    const completedQuantity = data[href].completedQuantity
 
-        if (promiseList.length === 0) return false
+                    const percentage = new Intl.NumberFormat(undefined, {
+                        maximumFractionDigits: 2
+                    }).format(completedQuantity / total * 100)
+                    data[href].message = `中${completedQuantity}/${total}（${percentage}%）`
+                }
+            }))
+        )
 
-        let imageRes = await Promise.all(promiseList)
-
-        if (imageRes.some(item => item === null)) {
+        let taskQueueRes = await taskQueue.start()
+        if (taskQueueRes === false) {
+            // 解析失败
             return false
         }
 
         if (text) {
-            imageRes.push(await getTextBlob({
+            taskQueueRes.push(await getTextBlob({
                 text,
                 href,
                 isLongText
             }))
         }
 
-        imageRes = imageRes.filter(item => !isEmptyFile(item));
+        taskQueueRes = taskQueueRes.filter(item => !isEmptyFile(item));
 
-        if (imageRes.length === 1) {
-            download(URL.createObjectURL(imageRes[0]._blob), `${data[href].title}${imageRes[0]._lastName}`)
-        } else if (imageRes.length > 1) {
-            const content = await pack(imageRes, data[href].title)
+        if (taskQueueRes.length === 1) {
+            download(URL.createObjectURL(taskQueueRes[0]._blob), `${data[href].title}${taskQueueRes[0]._lastName}`)
+        } else if (taskQueueRes.length > 1) {
+            const content = await pack(taskQueueRes, data[href].title)
             download(URL.createObjectURL(content), `${data[href].title}.zip`)
         }
         return true
