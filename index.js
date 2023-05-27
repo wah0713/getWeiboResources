@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         微博一键下载（9宫格&&视频）
 // @namespace    https://github.com/wah0713/getWeiboResources
-// @version      1.9.0
+// @version      1.9.1
 // @description  一个兴趣使然的脚本，微博一键下载脚本。傻瓜式-简单、易用、可靠
 // @supportURL   https://github.com/wah0713/getWeiboResources/issues
 // @updateURL    https://greasyfork.org/scripts/454816/code/download.user.js
@@ -72,7 +72,7 @@
         isEmptyError: '失败，未找到资源',
         // todo 说不定以后想做直播资源下载
         isLiveError: '失败，直播资源解析失败',
-        isUnkownError: '失败，未知错误',
+        isUnkownError: '失败，未知错误(点击重试)',
         finish: '完成'
     }
     // 左边显示的消息数
@@ -661,7 +661,9 @@
 
         taskQueueRes = taskQueueRes.filter(item => !isEmptyFile(item));
 
-        if (taskQueueRes.length === 1) {
+        if (taskQueueRes.length === 0) {
+            return null
+        } else if (taskQueueRes.length === 1) {
             download(URL.createObjectURL(taskQueueRes[0]._blob), `${data[href].title}${taskQueueRes[0]._lastName}`)
         } else if (taskQueueRes.length > 1) {
             const content = await pack(taskQueueRes, data[href].title)
@@ -748,7 +750,10 @@
             })
         }
 
-        if (isSuccess) {
+        if (isSuccess === null) {
+            // 没有资源
+            data[href].message = message.isEmptyError
+        } else if (isSuccess) {
             // 下载成功
             data[href].message = message.finish
         } else {
