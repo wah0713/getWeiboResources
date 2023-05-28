@@ -374,6 +374,16 @@
                 onload: (res) => {
                     isDebug && console.log(`getFileBlob-onload`, res)
                     options.callback && options.callback()
+
+                    // 下载失败，也会正常返回空文件
+                    const {
+                        size,
+                        type
+                    } = res.response;
+                    if (size <= 200 && type === "text/html; charset=utf-8") {
+                        resolve(null)
+                    }
+
                     resolve({
                         ...res,
                         _blob: res.response,
@@ -599,6 +609,7 @@
                 // 解析失败
                 return false
             }
+
             mediaRes._blob = new Blob(taskQueueRes.map(item => item._blob), {
                 type: 'video/MP2T'
             })
