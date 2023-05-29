@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         微博一键下载（9宫格&&视频）
 // @namespace    https://github.com/wah0713/getWeiboResources
-// @version      1.9.1
+// @version      1.9.2
 // @description  一个兴趣使然的脚本，微博一键下载脚本。傻瓜式-简单、易用、可靠
 // @supportURL   https://github.com/wah0713/getWeiboResources/issues
 // @updateURL    https://greasyfork.org/scripts/454816/code/download.user.js
@@ -178,7 +178,8 @@
             created_at,
             mblog_vip_type,
             user: {
-                screen_name
+                screen_name,
+                idstr
             }
         } = await getInfoById(id)
 
@@ -253,6 +254,7 @@
             text: text_raw,
             regionName: region_name,
             userName: screen_name,
+            userID: idstr,
         }
     }
 
@@ -279,13 +281,19 @@
     function getFileName({
         time,
         userName,
+        userID,
         regionName,
         geo,
-        text
+        text,
     }) {
+        // 下载名中显示【用户ID】
+        if (userID && config.isShowUserID.value) {
+            userName += `(${userID})`
+        }
+
         let title = `${userName} ${time}`
 
-        // 是否下载名中显示IP区域
+        // 是否下载名中显示【IP区域】
         if (regionName && config.isShowRegion.value) {
             const region = regionName.match(/\s(.*)/) && RegExp.$1
             if (region) {
@@ -293,13 +301,13 @@
             }
         }
 
-        // 下载名中显示定位
+        // 下载名中显示【定位】
         const geoName = get(geo, 'detail.title', null)
         if (geoName && config.isShowGeo.value) {
             title += ' ' + geoName
         }
 
-        // 下载名中显示微博文本(前20字)
+        // 下载名中显示【微博文本(前20字)】
         if (config.isNameIncludesText.value) {
             title += ' ' + text.slice(0, 20)
         }
@@ -319,7 +327,7 @@
             const name = `${modification}${obj._lastName}`
             zip.file(name, obj._blob);
         });
-        return new Promise(async (resolve, rejcet) => {
+        return new Promise(async (resolve, reject) => {
             // 生成zip文件并下载
             resolve(await zip.generateAsync({
                 type: 'blob'
@@ -362,7 +370,7 @@
 
     // 下载流
     function getFileBlob(url, _lastName, options) {
-        return new Promise((resolve, rejcet) => {
+        return new Promise((resolve, reject) => {
             GM_xmlhttpRequest({
                 url,
                 method: 'get',
@@ -403,7 +411,7 @@
 
     // 通过id获取链接
     function getInfoById(id) {
-        return new Promise((resolve, rejcet) => {
+        return new Promise((resolve, reject) => {
             GM_xmlhttpRequest({
                 url: `https://weibo.com/ajax/statuses/show?id=${id}`,
                 responseType: 'json',
@@ -452,7 +460,7 @@
     }
 
     function blobToText(blob) {
-        return new Promise((resolve, rejcet) => {
+        return new Promise((resolve, reject) => {
             // 将blob转为text
             let reader = new FileReader()
             reader.readAsText(blob, "utf-8")
@@ -465,7 +473,7 @@
 
     // 通过id获取长文
     function getLongtextById(id) {
-        return new Promise((resolve, rejcet) => {
+        return new Promise((resolve, reject) => {
             GM_xmlhttpRequest({
                 url: `https://weibo.com/ajax/statuses/longtext?id=${id}`,
                 responseType: 'json',
@@ -506,7 +514,7 @@
         }
 
         run() {
-            return new Promise((resolve, rejcet) => {
+            return new Promise((resolve, reject) => {
                 const length = this.taskList.length;
                 if (!length) {
                     return false;
@@ -839,6 +847,7 @@
             isLive,
             time,
             userName,
+            userID,
             regionName,
             geo,
             text,
@@ -848,6 +857,7 @@
         data[href].title = getFileName({
             time,
             userName,
+            userID,
             regionName,
             geo,
             text
@@ -910,18 +920,23 @@
     });
 
     const config = {
+        isShowUserID: {
+            name: '下载名中显示【用户ID】',
+            id: null,
+            value: GM_getValue('isShowUserID', false)
+        },
         isShowRegion: {
-            name: '下载名中显示IP区域',
+            name: '下载名中显示【IP区域】',
             id: null,
             value: GM_getValue('isShowRegion', false)
         },
         isShowGeo: {
-            name: '下载名中显示定位',
+            name: '下载名中显示【定位】',
             id: null,
             value: GM_getValue('isShowGeo', false)
         },
         isNameIncludesText: {
-            name: '下载名中显示微博文本(前20字)',
+            name: '下载名中显示【微博文本(前20字)】',
             id: null,
             value: GM_getValue('isNameIncludesText', false)
         },
@@ -941,7 +956,7 @@
             value: GM_getValue('isShowActive', false)
         },
         isIncludesText: {
-            name: '下载文件中包含微博文本',
+            name: '下载文件中包含【微博文本】',
             id: null,
             value: GM_getValue('isIncludesText', false)
         }
