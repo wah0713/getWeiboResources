@@ -286,11 +286,6 @@
         geo,
         text,
     }) {
-        // 下载名中显示【用户ID】
-        if (userID && config.isShowUserID.value) {
-            userName += `(${userID})`
-        }
-
         let title = `${userName} ${time}`
 
         // 是否下载名中显示【IP区域】
@@ -305,6 +300,11 @@
         const geoName = get(geo, 'detail.title', null)
         if (geoName && config.isShowGeo.value) {
             title += ' ' + geoName
+        }
+
+        // 下载名中显示【用户ID】
+        if (userID && config.isShowUserID.value) {
+            title += ' ' + userID
         }
 
         // 下载名中显示【微博文本(前20字)】
