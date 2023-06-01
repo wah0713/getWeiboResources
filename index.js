@@ -537,9 +537,11 @@
                         }
                         this.resList[index] = res
                     }).finally(async () => {
-                        if (this.isError) return false
                         // 任务完成，释放空间
                         this.max++;
+
+                        if (this.isError) return false
+
                         if (this.max === this.originMax) {
                             // 任务完成
                             resolve(this.resList)
