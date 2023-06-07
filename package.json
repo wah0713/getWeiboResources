@@ -1,6 +1,6 @@
 {
   "name": "myTampermonkey",
-  "version": "1.9.2",
+  "version": "1.9.3",
   "description": "微博一键下载",
   "private": true,
   "scripts": {

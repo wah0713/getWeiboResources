@@ -62,7 +62,9 @@ div.card-feed div.from::after,
   z-index: 1;
 }
 .m-main #wah0713:hover .input-box,
-.Frame_content_3XrxZ #wah0713:hover .input-box {
+.Frame_content_3XrxZ #wah0713:hover .input-box,
+.m-main #wah0713:hover .editName,
+.Frame_content_3XrxZ #wah0713:hover .editName {
   display: block;
 }
 .m-main #wah0713 input,
@@ -107,4 +109,35 @@ div.card-feed div.from::after,
 .m-main #wah0713 .showMessage > p a:hover,
 .Frame_content_3XrxZ #wah0713 .showMessage > p a:hover {
   text-decoration: none;
+}
+.m-main #wah0713 .editName,
+.Frame_content_3XrxZ #wah0713 .editName {
+  display: none;
+  border: 1px solid #ccc;
+  padding: 2px;
+  border-radius: 6px;
+}
+.m-main #wah0713 .editName ul,
+.Frame_content_3XrxZ #wah0713 .editName ul {
+  list-style: none;
+  display: flex;
+  height: 20px;
+  margin: 0;
+  padding: 0;
+  background-color: #fafafa;
+}
+.m-main #wah0713 .editName li,
+.Frame_content_3XrxZ #wah0713 .editName li {
+  height: 20px;
+  line-height: 20px;
+  background: #ff3852;
+  color: #fff;
+  margin-inline: 2px;
+  padding-inline: 3px;
+  font-size: 12px;
+  cursor: grab;
+}
+.m-main #wah0713 .editName .unactive li,
+.Frame_content_3XrxZ #wah0713 .editName .unactive li {
+  background: #ff9406;
 }

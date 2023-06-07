@@ -79,7 +79,9 @@ div.card-feed div.from,
         }
 
         &:hover {
-            .input-box {
+
+            .input-box,
+            .editName {
                 display: block;
             }
         }
@@ -127,6 +129,40 @@ div.card-feed div.from,
                     }
                 }
             }
+        }
+
+        .editName {
+            display: none;
+            border: 1px solid #ccc;
+            padding: 2px;
+            border-radius: 6px;
+
+            ul {
+                list-style: none;
+                display: flex;
+                height: 20px;
+                margin: 0;
+                padding: 0;
+                background-color: #fafafa;
+            }
+
+            li {
+                height: 20px;
+                line-height: 20px;
+                background: rgb(255, 56, 82);
+                color: #fff;
+                margin-inline: 2px;
+                padding-inline: 3px;
+                font-size: 12px;
+                cursor: grab;
+            }
+
+            .unactive {
+                li {
+                    background: rgb(255, 148, 6);
+                }
+            }
+
         }
     }
 }

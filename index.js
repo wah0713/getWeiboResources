@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         微博一键下载（9宫格&&视频）
 // @namespace    https://github.com/wah0713/getWeiboResources
-// @version      1.9.2
+// @version      1.9.3
 // @description  一个兴趣使然的脚本，微博一键下载脚本。傻瓜式-简单、易用、可靠
 // @supportURL   https://github.com/wah0713/getWeiboResources/issues
 // @updateURL    https://greasyfork.org/scripts/454816/code/download.user.js
@@ -85,6 +85,16 @@
         completedQuantity: 0,
         messagelist: []
     }
+
+    const nameAll = {
+        userName: '用户名',
+        userID: '用户ID',
+        time: '时间',
+        geoName: '定位',
+        region: 'IP区域',
+        text: '微博文本',
+    }
+    let nameArr = GM_getValue('nameArr', ['userName', 'time'])
 
     // 递归proxy
     function reactive(data, callBack) {
@@ -262,7 +272,7 @@
     function isEmptyFile(res) {
         const size = get(res, '_blob.size', 0)
         const finalUrl = get(res, 'finalUrl', '')
-        if (finalUrl.endsWith('gif#101') || size === 191) {
+        if (finalUrl.endsWith('gif#101') || size <= 200) {
             return true
         }
         return false
@@ -286,37 +296,30 @@
         geo,
         text,
     }) {
-        let title = `${userName} ${time}`
 
-        // 是否下载名中显示【IP区域】
-        if (regionName && config.isShowRegion.value) {
-            const region = regionName.match(/\s(.*)/) && RegExp.$1
-            if (region) {
-                title += ' ' + region
+        const region = regionName && regionName.match(/\s(.*)/) && RegExp.$1 || ''
+        const geoName = get(geo, 'detail.title', '')
+        const nameObj = {
+            time,
+            userName,
+            userID,
+            region,
+            geoName,
+            text,
+        }
+
+        let title = ''
+        for (let i = 0; i < nameArr.length; i++) {
+            const item = nameArr[i];
+            if (nameObj[item]) {
+                title += ` ${nameObj[item]}`
             }
         }
-
-        // 下载名中显示【定位】
-        const geoName = get(geo, 'detail.title', null)
-        if (geoName && config.isShowGeo.value) {
-            title += ' ' + geoName
-        }
-
-        // 下载名中显示【用户ID】
-        if (userID && config.isShowUserID.value) {
-            title += ' ' + userID
-        }
-
-        // 下载名中显示【微博文本(前20字)】
-        if (config.isNameIncludesText.value) {
-            title += ' ' + text.slice(0, 20)
-        }
-
+        title = title.trim()
         // 替换下载名中【特殊符号】为下划线【_】
         if (config.isSpecialHandlingName.value) {
             title = title.replace(/[\<|\>|\\|\/|;|:|\*|\?|\$|@|\&|\(|\)|\"|\'|#|\|]/g, '_')
         }
-
         return title
     }
 
@@ -804,14 +807,77 @@
     $('.imgInstance.Viewer_imgElm_2JHWe').on('click', clickEscKey)
 
     $main.prepend(`
-        <div id="wah0713">
-            <div class="container">
-                <div class="showMessage"></div>
-                <div class="input-box">需要显示的消息条数：<input type="number" max="${max}" min="${min}" value="${messagesNumber}" step=1>
-                </div>
+    <div id="wah0713">
+        <div class="container">
+            <div class="showMessage"></div>
+            <div class="editName">
+                <span>可选下载名（【点击】或【拖拽到下方】）</span>
+                <ul class="unactive">
+                    ${[...Object.keys(nameAll)].filter(item=>!nameArr.includes(item)).map(item=>{
+                        return `<li data-id="${item}" draggable="true">${nameAll[item]}</li>`
+                    }).join('')}
+                </ul>
+                <span>当前下载名（【用户名】为必选）</span>
+                <ul class="active">
+                    ${nameArr.map(item=>{
+                        return `<li data-id="${item}" draggable="true">${nameAll[item]}</li>`
+                    }).join('')}
+                </ul>
+            </div>
+            <div class="input-box">需要显示的消息条数：<input type="number" max="${max}" min="${min}" value="${messagesNumber}"
+                    step=1>
             </div>
         </div>
+    </div>
        `)
+
+    let dragstartDom = null;
+
+    function updateNameArr() {
+        nameArr = []
+        dragstartDom = null;
+        [...document.querySelector(`#wah0713 .editName ul.active`).children].forEach(item => {
+            nameArr.push(item.dataset.id)
+        })
+        GM_setValue('nameArr', nameArr)
+    }
+
+    [...document.querySelectorAll('#wah0713 .editName ul')].forEach(item => {
+
+        item.addEventListener('dragstart', function (event) {
+            if (event.target.nodeName !== 'LI') {
+                return false
+            }
+            dragstartDom = event.target
+        });
+
+        item.addEventListener('dragover', function (event) {
+            if (item.classList.contains('unactive') && dragstartDom.dataset.id === 'userName') {
+                event.dataTransfer.dropEffect = 'none';
+                return false
+            }
+            event.preventDefault();
+            event.dataTransfer.dropEffect = 'move';
+        });
+
+        item.addEventListener('drop', function (event) {
+            if (event.target.nodeName === 'LI') {
+                event.target.insertAdjacentElement("beforeBegin", dragstartDom)
+            } else if (event.target.nodeName === 'UL') {
+                event.target.insertAdjacentElement("beforeEnd", dragstartDom)
+            }
+            updateNameArr()
+        });
+
+        item.addEventListener('click', function (event) {
+            if (event.target.nodeName !== 'LI' || event.target.dataset.id === 'userName') {
+                return false
+            }
+            const className = item.classList.contains('unactive') ? 'active' : 'unactive'
+            document.querySelector(`#wah0713 .editName ul.${className}`).insertAdjacentElement("beforeEnd", event.target)
+            updateNameArr()
+        })
+    })
 
     // 是第一次使用开启
     if (isFirst) {
@@ -922,26 +988,6 @@
     });
 
     const config = {
-        isShowUserID: {
-            name: '下载名中显示【用户ID】',
-            id: null,
-            value: GM_getValue('isShowUserID', false)
-        },
-        isShowRegion: {
-            name: '下载名中显示【IP区域】',
-            id: null,
-            value: GM_getValue('isShowRegion', false)
-        },
-        isShowGeo: {
-            name: '下载名中显示【定位】',
-            id: null,
-            value: GM_getValue('isShowGeo', false)
-        },
-        isNameIncludesText: {
-            name: '下载名中显示【微博文本(前20字)】',
-            id: null,
-            value: GM_getValue('isNameIncludesText', false)
-        },
         isSpecialHandlingName: {
             name: '替换下载名中【特殊符号】为下划线【_】',
             id: null,
@@ -984,7 +1030,7 @@
     updateMenuCommand()
 
     GM_addStyle(`
-   body{--yellow:#ff8200}.head-info_info_2AspQ:not(.Feed_retweetHeadInfo_Tl4Ld):after,div.card-feed div.from:after{content:"下载" attr(show-text);color:var(--yellow);cursor:pointer;float:right}.main-full.isFirst div.card-feed div.from:after,.Main_full_1dfQX.isFirst .head-info_info_2AspQ:not(.Feed_retweetHeadInfo_Tl4Ld):after{animation:wobble 1s infinite alternate}@keyframes wobble{0%{-webkit-transform:translateZ(0);transform:translateZ(0)}15%{-webkit-transform:translate3d(-25%,0,0) rotate(-5deg);transform:translate3d(-25%,0,0) rotate(-5deg)}30%{-webkit-transform:translate3d(20%,0,0) rotate(3deg);transform:translate3d(20%,0,0) rotate(3deg)}45%{-webkit-transform:translate3d(-15%,0,0) rotate(-3deg);transform:translate3d(-15%,0,0) rotate(-3deg)}60%{-webkit-transform:translate3d(10%,0,0) rotate(2deg);transform:translate3d(10%,0,0) rotate(2deg)}75%{-webkit-transform:translate3d(-5%,0,0) rotate(-1deg);transform:translate3d(-5%,0,0) rotate(-1deg)}to{-webkit-transform:translateZ(0);transform:translateZ(0)}}.Frame_content_3XrxZ #wah0713,.m-main #wah0713{font-size:12px;font-weight:700}.Frame_content_3XrxZ #wah0713.out,.m-main #wah0713.out{opacity:0}.Frame_content_3XrxZ #wah0713.out:hover,.m-main #wah0713.out:hover{opacity:1}.Frame_content_3XrxZ #wah0713 .container,.m-main #wah0713 .container{position:fixed;left:0;z-index:1}.Frame_content_3XrxZ #wah0713:hover .input-box,.m-main #wah0713:hover .input-box{display:block}.Frame_content_3XrxZ #wah0713 input,.m-main #wah0713 input{width:3em;color:var(--yellow);border-width:1px;outline:0;background-color:transparent}.Frame_content_3XrxZ #wah0713 .input-box,.m-main #wah0713 .input-box{display:none}.Frame_content_3XrxZ #wah0713 .showMessage>p,.m-main #wah0713 .showMessage>p{line-height:16px;margin:4px}.Frame_content_3XrxZ #wah0713 .showMessage>p span,.m-main #wah0713 .showMessage>p span{color:#333}.Frame_content_3XrxZ #wah0713 .showMessage>p span.red,.m-main #wah0713 .showMessage>p span.red{color:var(--yellow);vertical-align:top}.Frame_content_3XrxZ #wah0713 .showMessage>p span.red.downloadBtn,.m-main #wah0713 .showMessage>p span.red.downloadBtn{cursor:pointer}.Frame_content_3XrxZ #wah0713 .showMessage>p a,.m-main #wah0713 .showMessage>p a{color:#333;overflow:hidden;text-overflow:ellipsis;max-width:300px;display:inline-block;white-space:nowrap}.Frame_content_3XrxZ #wah0713 .showMessage>p a:hover,.m-main #wah0713 .showMessage>p a:hover{text-decoration:none}
+    body{--yellow:#ff8200}.head-info_info_2AspQ:not(.Feed_retweetHeadInfo_Tl4Ld):after,div.card-feed div.from:after{content:"下载" attr(show-text);color:var(--yellow);cursor:pointer;float:right}.main-full.isFirst div.card-feed div.from:after,.Main_full_1dfQX.isFirst .head-info_info_2AspQ:not(.Feed_retweetHeadInfo_Tl4Ld):after{animation:wobble 1s infinite alternate}@keyframes wobble{0%{-webkit-transform:translateZ(0);transform:translateZ(0)}15%{-webkit-transform:translate3d(-25%,0,0) rotate(-5deg);transform:translate3d(-25%,0,0) rotate(-5deg)}30%{-webkit-transform:translate3d(20%,0,0) rotate(3deg);transform:translate3d(20%,0,0) rotate(3deg)}45%{-webkit-transform:translate3d(-15%,0,0) rotate(-3deg);transform:translate3d(-15%,0,0) rotate(-3deg)}60%{-webkit-transform:translate3d(10%,0,0) rotate(2deg);transform:translate3d(10%,0,0) rotate(2deg)}75%{-webkit-transform:translate3d(-5%,0,0) rotate(-1deg);transform:translate3d(-5%,0,0) rotate(-1deg)}to{-webkit-transform:translateZ(0);transform:translateZ(0)}}.Frame_content_3XrxZ #wah0713,.m-main #wah0713{font-size:12px;font-weight:700}.Frame_content_3XrxZ #wah0713.out,.m-main #wah0713.out{opacity:0}.Frame_content_3XrxZ #wah0713.out:hover,.m-main #wah0713.out:hover{opacity:1}.Frame_content_3XrxZ #wah0713 .container,.m-main #wah0713 .container{position:fixed;left:0;z-index:1}.Frame_content_3XrxZ #wah0713:hover .editName,.Frame_content_3XrxZ #wah0713:hover .input-box,.m-main #wah0713:hover .editName,.m-main #wah0713:hover .input-box{display:block}.Frame_content_3XrxZ #wah0713 input,.m-main #wah0713 input{width:3em;color:var(--yellow);border-width:1px;outline:0;background-color:transparent}.Frame_content_3XrxZ #wah0713 .input-box,.m-main #wah0713 .input-box{display:none}.Frame_content_3XrxZ #wah0713 .showMessage>p,.m-main #wah0713 .showMessage>p{line-height:16px;margin:4px}.Frame_content_3XrxZ #wah0713 .showMessage>p span,.m-main #wah0713 .showMessage>p span{color:#333}.Frame_content_3XrxZ #wah0713 .showMessage>p span.red,.m-main #wah0713 .showMessage>p span.red{color:var(--yellow);vertical-align:top}.Frame_content_3XrxZ #wah0713 .showMessage>p span.red.downloadBtn,.m-main #wah0713 .showMessage>p span.red.downloadBtn{cursor:pointer}.Frame_content_3XrxZ #wah0713 .showMessage>p a,.m-main #wah0713 .showMessage>p a{color:#333;overflow:hidden;text-overflow:ellipsis;max-width:300px;display:inline-block;white-space:nowrap}.Frame_content_3XrxZ #wah0713 .showMessage>p a:hover,.m-main #wah0713 .showMessage>p a:hover{text-decoration:none}.Frame_content_3XrxZ #wah0713 .editName,.m-main #wah0713 .editName{display:none;border:1px solid #ccc;padding:2px;border-radius:6px}.Frame_content_3XrxZ #wah0713 .editName ul,.m-main #wah0713 .editName ul{list-style:none;display:flex;height:20px;margin:0;padding:0;background-color:#fafafa}.Frame_content_3XrxZ #wah0713 .editName li,.m-main #wah0713 .editName li{height:20px;line-height:20px;background:#ff3852;color:#fff;margin-inline:2px;padding-inline:3px;font-size:12px;cursor:grab}.Frame_content_3XrxZ #wah0713 .editName .unactive li,.m-main #wah0713 .editName .unactive li{background:#ff9406}
           `)
 
     // // debugJS
