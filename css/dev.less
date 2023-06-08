@@ -136,6 +136,7 @@ div.card-feed div.from,
             border: 1px solid #ccc;
             padding: 2px;
             border-radius: 6px;
+            user-select: none;
 
             ul {
                 list-style: none;
@@ -151,18 +152,23 @@ div.card-feed div.from,
                 line-height: 20px;
                 background: rgb(255, 56, 82);
                 color: #fff;
-                margin-inline: 2px;
                 padding-inline: 3px;
+                border-left: 2px solid #fafafa;
                 font-size: 12px;
                 cursor: grab;
+                border-radius: 5px;
             }
-
-            .unactive {
-                li {
-                    background: rgb(255, 148, 6);
-                }
-            }
-
         }
+
+        .unactive {
+            li {
+                background: rgb(255, 148, 6);
+            }
+        }
+
+        .outline {
+            outline: 2px solid #119da6;
+        }
+
     }
 }

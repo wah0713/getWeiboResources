@@ -3,7 +3,8 @@
 <details>
 <summary>📔功能介绍(点击查看)</summary>
 <pre>
-15、支持下载m3u8类型视频（如爱奇艺视频）（1.9.0）
+16、支持选择下载名称组合（2.0.0）
+15、支持下载m3u8类型视频（如<img width="14" style="vertical-align: text-top;" src="https://www.iqiyipic.com/pcwimg/PCW-72X72.png">爱奇艺视频）（1.9.0）
 14、支持下载名中显示微博文本(前20字)（1.8.0）
 13、支持下载文件中包含微博文本（1.8.0）
 12、支持下载视频（1.7.0）
@@ -11,7 +12,7 @@
 10、右边【记录下载状态】支持再次下载（1.6.0）
 9、旧版功能下线（1.6.0）
 8、记录下载状态（1.5.0）
-7、兼容火狐浏览器（1.4.0）
+7、兼容<img width="14" style="vertical-align: text-top;" src="https://www.firefox.com.cn/media/img/favicons/firefox/browser/apple-touch-icon.79c2abeb4e35.png">火狐浏览器（1.4.0）
 6、<del>兼容旧版（1.3.0）</del>
 5、新版全屏预览图片时，再次点击图片退出全屏预览(1.3.0)
 4、支持下载live图（1.2.0）
@@ -21,23 +22,22 @@
 </pre>
 </details>
 
-### 当前版本1.9.0效果图：
+### 当前版本2.0.0效果图：
 
 <pre>
-1、支持下载m3u8类型视频（如爱奇艺视频）
+1、支持选择下载名称组合
+</pre>
+
+![当前版本2.0.0][2.0.0]
+
+### 上个版本1.9.0效果图：
+
+<pre>
+1、支持下载m3u8类型视频（如<img width="14" style="vertical-align: text-top;" src="https://www.iqiyipic.com/pcwimg/PCW-72X72.png">爱奇艺视频）
 2、不支持下载直播类视频
 </pre>
 
-![当前版本1.9.0][1.9.0]
-
-### 上个版本1.8.0效果图：
-
-<pre>
-1、支持下载名中显示微博文本(前20字)
-2、支持下载文件中包含微博文本
-</pre>
-
-![上个版本1.8.0][1.8.0]
+![上个版本1.9.0][1.9.0]
 
 ### [万能下载视频的方法👈](https://greasyfork.org/zh-CN/scripts/454816-%E5%BE%AE%E5%8D%9A%E4%B8%80%E9%94%AE%E5%8F%96%E5%9B%BE-9%E5%AE%AB%E6%A0%BC/discussions/160492)
 
@@ -49,5 +49,5 @@
 
 这个脚本是工作之余，自己<del>低级程序员</del>练练手，所以也不要有太多期待。
 <!-- weibo/wb -->
+[2.0.0]:https://s1.ax1x.com/2023/06/08/pCAetiR.png
 [1.9.0]:https://s1.ax1x.com/2023/05/25/p9bVU0I.png
-[1.8.0]:https://s1.ax1x.com/2023/04/15/p9SXVEj.png

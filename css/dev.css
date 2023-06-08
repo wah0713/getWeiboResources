@@ -116,6 +116,7 @@ div.card-feed div.from::after,
   border: 1px solid #ccc;
   padding: 2px;
   border-radius: 6px;
+  user-select: none;
 }
 .m-main #wah0713 .editName ul,
 .Frame_content_3XrxZ #wah0713 .editName ul {
@@ -132,12 +133,17 @@ div.card-feed div.from::after,
   line-height: 20px;
   background: #ff3852;
   color: #fff;
-  margin-inline: 2px;
   padding-inline: 3px;
+  border-left: 2px solid #fafafa;
   font-size: 12px;
   cursor: grab;
+  border-radius: 5px;
 }
-.m-main #wah0713 .editName .unactive li,
-.Frame_content_3XrxZ #wah0713 .editName .unactive li {
+.m-main #wah0713 .unactive li,
+.Frame_content_3XrxZ #wah0713 .unactive li {
   background: #ff9406;
+}
+.m-main #wah0713 .outline,
+.Frame_content_3XrxZ #wah0713 .outline {
+  outline: 2px solid #119da6;
 }
