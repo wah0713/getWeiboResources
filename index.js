@@ -92,7 +92,7 @@
         time: '时间',
         geoName: '定位',
         region: 'IP区域',
-        text: '微博文本',
+        text: '微博文本(前20字)',
     }
     let nameArr = GM_getValue('nameArr', ['userName', 'time'])
 
@@ -299,6 +299,8 @@
 
         const region = regionName && regionName.match(/\s(.*)/) && RegExp.$1 || ''
         const geoName = get(geo, 'detail.title', '')
+        text = text.slice(0, 20)
+
         const nameObj = {
             time,
             userName,
