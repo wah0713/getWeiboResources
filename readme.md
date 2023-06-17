@@ -82,17 +82,15 @@ src="https://api.iowen.cn/favicon/www.iqiyi.com.png">爱奇艺视频）（1.9.0�
 
 ### 当前版本2.0.0效果图：
 
-<pre>
-1、支持选择下载名称组合
-</pre>
+1、支持选择下载名称组合<br>
+
 ![当前版本2.0.0][2.0.0]
 
 ### 上个版本1.9.0效果图：
 
-<pre>
-1、支持下载m3u8类型视频（如<img loading="lazy" width="14" style="vertical-align: text-top; " src="https://api.iowen.cn/favicon/www.iqiyi.com.png">爱奇艺视频）
-2、不支持下载直播类视频
-</pre>
+1、支持下载m3u8类型视频（如<img loading="lazy" width="14" style="vertical-align: text-top; " src="https://api.iowen.cn/favicon/www.iqiyi.com.png">爱奇艺视频）<br>
+2、不支持下载直播类视频<br>
+
 ![上个版本1.9.0][1.9.0]
 
 ### [万能下载视频的方法👈](https://greasyfork.org/zh-CN/scripts/454816-%E5%BE%AE%E5%8D%9A%E4%B8%80%E9%94%AE%E5%8F%96%E5%9B%BE-9%E5%AE%AB%E6%A0%BC/discussions/160492)

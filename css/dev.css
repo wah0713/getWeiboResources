@@ -124,7 +124,7 @@ div.card-feed div.from::after,
   display: flex;
   height: 20px;
   margin: 0;
-  padding: 0;
+  padding: 0 10px 0 0;
   background-color: #fafafa;
 }
 .m-main #wah0713 .editName li,
@@ -134,7 +134,7 @@ div.card-feed div.from::after,
   background: #ff3852;
   color: #fff;
   padding-inline: 3px;
-  border-left: 2px solid #fafafa;
+  margin-left: 2px;
   font-size: 12px;
   cursor: grab;
   border-radius: 5px;
