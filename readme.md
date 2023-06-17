@@ -52,7 +52,7 @@ src="https://api.iowen.cn/favicon/www.iqiyi.com.png">爱奇艺视频）（1.9.0�
 <p>
 7、兼容<img loading="lazy" width="14" style="vertical-align: text-top; "src="https://www.firefox.com.cn/media/img/favicons/firefox/browser/apple-touch-icon.79c2abeb4e35.png">火狐浏览器（1.4.0）
 </p>
-<br/>
+1.4.0(当时偷个懒，没有留图片)
 <p>
 6、<del>兼容旧版（1.3.0）</del>
 5、新版全屏预览图片时，再次点击图片退出全屏预览(1.3.0)
