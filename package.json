@@ -4,7 +4,9 @@
   "description": "微博一键下载",
   "private": true,
   "scripts": {
-    "bundle": "SET NODE_OPTIONS=--openssl-legacy-provider && webpack"
+    "bundle": "SET NODE_OPTIONS=--openssl-legacy-provider && webpack",
+    "prod": "SET NODE_OPTIONS=--openssl-legacy-provider && webpack && node build prod",
+    "dev": "node build"
   },
   "repository": {
     "type": "git",
