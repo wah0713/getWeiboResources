@@ -2,7 +2,7 @@
 // @name         微博一键下载（9宫格&&视频）
 // @namespace    https://github.com/wah0713/getWeiboResources
 // @version      2.0.1
-// @description  一个兴趣使然的脚本，微博一键下载脚本。傻瓜式-简单、易用、可靠
+// @description  一个兴趣使然的脚本，微博一键下载脚本。傻瓜式🐵（简单🍎、易用🧩、可靠💪）
 // @supportURL   https://github.com/wah0713/getWeiboResources/issues
 // @updateURL    https://greasyfork.org/scripts/454816/code/download.user.js
 // @author       wah0713
