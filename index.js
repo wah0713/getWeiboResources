@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         微博一键下载（9宫格&&视频）
 // @namespace    https://github.com/wah0713/getWeiboResources
-// @version      2.0.1
+// @version      2.0.2
 // @description  一个兴趣使然的脚本，微博一键下载脚本。傻瓜式🐵（简单🍎、易用🧩、可靠💪）
 // @supportURL   https://github.com/wah0713/getWeiboResources/issues
 // @updateURL    https://greasyfork.org/scripts/454816/code/download.user.js
@@ -123,7 +123,8 @@
     function handleMessage(target, value) {
         const {
             name,
-            title
+            title,
+            percentage
         } = target
 
         // title为空，即未初始化
@@ -152,6 +153,7 @@
         notice.messagelist.push({
             href: name,
             title,
+            percentage,
             message: `下载${value}`
         })
 
@@ -160,7 +162,7 @@
         $('#wah0713 .container .showMessage').html(`
             <p><span>进行中的下载任务数：</span><span class="red">${notice.completedQuantity}</span></p>
             ${tempList.reverse().map(item=>{
-                return `<p><a href="${item.href}" target="_blank" title="打开微博详情">${item.title}：</a><span data-href=${item.href} class="red downloadBtn" title="点击再次下载">${item.message}</span></p>`
+                return `<p><a href="${item.href}" style="background-image: linear-gradient(to right,#333 ${item.percentage}%,#91c6ca 0);" target="_blank" title="打开微博详情">${item.title}</a><span>:</span><span data-href=${item.href} class="red downloadBtn" title="点击再次下载">${item.message}</span></p>`
             }).join('')}
         `)
 
@@ -578,6 +580,7 @@
                 data[href].total = total
                 const percentage = completedQuantity / total * 100
 
+                data[href].percentage = percentage
                 data[href].message = `中${formatNumber(completedQuantity / 1024/ 1024)}/${formatNumber(total / 1024/ 1024)}M（${formatNumber(percentage)}%）`
             }
         })
@@ -614,6 +617,8 @@
                         const percentage = new Intl.NumberFormat(undefined, {
                             maximumFractionDigits: 2
                         }).format(completedQuantity / total * 100)
+
+                        data[href].percentage = percentage
                         data[href].message = `中${completedQuantity}/${total}（${percentage}%）`
                     }
                 }))
@@ -666,6 +671,8 @@
                     const percentage = new Intl.NumberFormat(undefined, {
                         maximumFractionDigits: 2
                     }).format(completedQuantity / total * 100)
+
+                    data[href].percentage = percentage
                     data[href].message = `中${completedQuantity}/${total}（${percentage}%）`
                 }
             }))
@@ -909,13 +916,14 @@
         data[href] = {
             urlData: {},
             text: '',
+            title: '',
+            message: '',
             isLive: false, // 直播资源
             isLongText: false,
-            title: '',
             name: href,
             total: 0,
             completedQuantity: 0,
-            message: '',
+            percentage: 0
         }
 
         const {

@@ -1,5 +1,6 @@
 body {
     --yellow: #ff8200;
+    --red: #ff3852;
 }
 
 div.card-feed div.from,
@@ -18,8 +19,6 @@ div.card-feed div.from,
         animation: wobble infinite 1s alternate;
     }
 }
-
-
 
 @keyframes wobble {
     from {
@@ -105,10 +104,10 @@ div.card-feed div.from,
 
                 span {
                     color: #333;
+                    vertical-align: top;
 
                     &.red {
                         color: var(--yellow);
-                        vertical-align: top;
 
                         &.downloadBtn {
                             cursor: pointer;
@@ -117,12 +116,13 @@ div.card-feed div.from,
                 }
 
                 a {
-                    color: #333;
+                    color: transparent;
                     overflow: hidden;
                     text-overflow: ellipsis;
                     max-width: 300px;
                     display: inline-block;
                     white-space: nowrap;
+                    -webkit-background-clip: text;
 
                     &:hover {
                         text-decoration: none;
@@ -150,7 +150,7 @@ div.card-feed div.from,
             li {
                 height: 20px;
                 line-height: 20px;
-                background: rgb(255, 56, 82);
+                background: var(--red);
                 color: #fff;
                 padding-inline: 3px;
                 margin-left: 2px;
@@ -162,7 +162,7 @@ div.card-feed div.from,
 
         .unactive {
             li {
-                background: rgb(255, 148, 6);
+                background: var(--yellow);
             }
         }
 
