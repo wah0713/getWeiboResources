@@ -1,8 +1,8 @@
 // ==UserScript==
-// @name         微博一键下载（9宫格&&视频）
+// @name         微博一键下载(9宫格&&视频)
 // @namespace    https://github.com/wah0713/getWeiboResources
 // @version      2.0.2
-// @description  一个兴趣使然的脚本，微博一键下载脚本。傻瓜式🐵（简单🍎、易用🧩、可靠💪）
+// @description  一个兴趣使然的脚本，微博一键下载脚本。傻瓜式🐵(简单🍎、易用🧩、可靠💪)
 // @supportURL   https://github.com/wah0713/getWeiboResources/issues
 // @updateURL    https://greasyfork.org/scripts/454816/code/download.user.js
 // @author       wah0713
@@ -353,7 +353,7 @@
         URL.revokeObjectURL(url)
     }
 
-    // 下载流（文本）
+    // 下载流(文本)
     async function getTextBlob({
         text,
         href,
@@ -581,7 +581,7 @@
                 const percentage = completedQuantity / total * 100
 
                 data[href].percentage = percentage
-                data[href].message = `中${formatNumber(completedQuantity / 1024/ 1024)}/${formatNumber(total / 1024/ 1024)}M（${formatNumber(percentage)}%）`
+                data[href].message = `中${formatNumber(completedQuantity / 1024/ 1024)}/${formatNumber(total / 1024/ 1024)}M(${formatNumber(percentage)}%)`
             }
         })
         if (!get(mediaRes, '_blob', null)) {
@@ -619,7 +619,7 @@
                         }).format(completedQuantity / total * 100)
 
                         data[href].percentage = percentage
-                        data[href].message = `中${completedQuantity}/${total}（${percentage}%）`
+                        data[href].message = `中${completedQuantity}/${total}(${percentage}%)`
                     }
                 }))
             )
@@ -650,7 +650,7 @@
         return true
     }
 
-    // 下载（默认）
+    // 下载(默认)
     async function DownLoadDefault({
         href,
         urlData,
@@ -673,7 +673,7 @@
                     }).format(completedQuantity / total * 100)
 
                     data[href].percentage = percentage
-                    data[href].message = `中${completedQuantity}/${total}（${percentage}%）`
+                    data[href].message = `中${completedQuantity}/${total}(${percentage}%)`
                 }
             }))
         )
@@ -773,7 +773,7 @@
                 isLongText
             })
         } else {
-            // 下载（默认）
+            // 下载(默认)
             isSuccess = await DownLoadDefault({
                 href,
                 urlData,
@@ -820,13 +820,13 @@
         <div class="container">
             <div class="showMessage"></div>
             <div class="editName">
-                <span>可选下载名（【点击】或【拖拽到下方】）</span>
+                <span>可选下载名(【点击】或【拖拽到下方】)</span>
                 <ul class="unactive">
                     ${[...Object.keys(nameAll)].filter(item=>!nameArr.includes(item)).map(item=>{
                         return `<li data-id="${item}" draggable="true">${nameAll[item]}</li>`
                     }).join('')}
                 </ul>
-                <span>当前下载名（【用户名】为必选）</span>
+                <span>当前下载名(【用户名】为必选)</span>
                 <ul class="active">
                     ${nameArr.map(item=>{
                         return `<li data-id="${item}" draggable="true">${nameAll[item]}</li>`
@@ -914,13 +914,13 @@
         const href = $(this).find(cardHeadAStr).attr('href')
 
         data[href] = {
+            name: href,
             urlData: {},
             text: '',
             title: '',
             message: '',
             isLive: false, // 直播资源
             isLongText: false,
-            name: href,
             total: 0,
             completedQuantity: 0,
             percentage: 0
