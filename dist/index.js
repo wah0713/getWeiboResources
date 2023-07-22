@@ -1,8 +1,8 @@
 // ==UserScript==
-// @name         微博一键下载（9宫格&&视频）
+// @name         微博一键下载(9宫格&&视频)
 // @namespace    https://github.com/wah0713/getWeiboResources
-// @version      2.0.2
-// @description  一个兴趣使然的脚本，微博一键下载脚本。傻瓜式🐵（简单🍎、易用🧩、可靠💪）
+// @version      2.1.0
+// @description  一个兴趣使然的脚本，微博一键下载脚本。傻瓜式🐵(简单🍎、易用🧩、可靠💪)
 // @supportURL   https://github.com/wah0713/getWeiboResources/issues
 // @updateURL    https://greasyfork.org/scripts/454816/code/download.user.js
 // @author       wah0713
@@ -96,6 +96,34 @@
     }
     let nameArr = GM_getValue('nameArr', ['userName', 'time'])
 
+    const config = {
+        isSpecialHandlingName: {
+            name: '替换下载名中【特殊符号】为下划线【_】',
+            id: null,
+            value: GM_getValue('isSpecialHandlingName', false)
+        },
+        isSaveHistory: {
+            name: '左侧消息是否保存',
+            id: null,
+            value: GM_getValue('isSaveHistory', false)
+        },
+        isAutoHide: {
+            name: '左侧消息自动消失',
+            id: null,
+            value: GM_getValue('isAutoHide', false)
+        },
+        isShowActive: {
+            name: '左侧消息过滤【已经完成】',
+            id: null,
+            value: GM_getValue('isShowActive', false)
+        },
+        isIncludesText: {
+            name: '下载文件中包含【微博文本】',
+            id: null,
+            value: GM_getValue('isIncludesText', false)
+        }
+    }
+
     // 递归proxy
     function reactive(data, callBack) {
         return new Proxy(data, {
@@ -120,6 +148,46 @@
         }
     })
 
+    const updateCacheData = () => {
+        const cacheData = JSON.parse(GM_getValue('cacheData', '{}'));
+        [...Object.keys(cacheData)].forEach(item => {
+            data[item] = cacheData[item]
+        })
+    }
+
+    if (config.isSaveHistory.value) {
+        updateCacheData()
+        notice.messagelist = JSON.parse(GM_getValue('noticeMessagelist', '[]'))
+
+        document.addEventListener('visibilitychange', function () {
+            if (!document.hidden) return false
+            notice.messagelist = JSON.parse(GM_getValue('noticeMessagelist', '[]'))
+            updateCacheData()
+        });
+    }
+
+    const filterData = () => {
+        const keyList = Object.keys(data)
+        const max = 50
+        if (keyList.length > max) {
+            const newKeyList = keyList.sort((a, b) => {
+                return data[b].startTime - data[a].startTime
+            })
+            newKeyList.slice(max).forEach(item => {
+                delete data[item]
+            })
+        }
+
+        const cacheData = JSON.parse(JSON.stringify(data));
+        [...Object.keys(cacheData)].forEach(item => {
+            cacheData[item].completedQuantity = null
+            // 下载成功
+            cacheData[item].message = message.finish
+        })
+
+        GM_setValue('cacheData', JSON.stringify(cacheData))
+    }
+
     function handleMessage(target, value) {
         const {
             name,
@@ -132,19 +200,7 @@
             return false
         }
 
-        const list = [...Object.keys(data)]
-        notice.completedQuantity = list.length;
-        list.forEach(item => {
-            let {
-                completedQuantity,
-                total,
-            } = data[item]
-
-            if (completedQuantity === total) {
-                notice.completedQuantity--
-            }
-        })
-
+        // 左侧消息是否保存
         if (config.isShowActive.value) {
             notice.messagelist = notice.messagelist.filter(item => item.message !== '下载完成')
         }
@@ -155,6 +211,23 @@
             title,
             percentage,
             message: `下载${value}`
+        })
+
+        const list = [...Object.keys(data)]
+        notice.completedQuantity = list.length;
+        list.forEach(item => {
+            let {
+                completedQuantity,
+                total,
+            } = data[item]
+
+            if (completedQuantity === total) {
+                notice.completedQuantity--
+                GM_setValue('noticeMessagelist', JSON.stringify(notice.messagelist))
+            } else if (completedQuantity === null) {
+                notice.completedQuantity--
+            }
+
         })
 
         const tempList = JSON.parse(JSON.stringify(notice.messagelist))
@@ -353,7 +426,7 @@
         URL.revokeObjectURL(url)
     }
 
-    // 下载流（文本）
+    // 下载流(文本)
     async function getTextBlob({
         text,
         href,
@@ -581,7 +654,7 @@
                 const percentage = completedQuantity / total * 100
 
                 data[href].percentage = percentage
-                data[href].message = `中${formatNumber(completedQuantity / 1024/ 1024)}/${formatNumber(total / 1024/ 1024)}M（${formatNumber(percentage)}%）`
+                data[href].message = `中${formatNumber(completedQuantity / 1024/ 1024)}/${formatNumber(total / 1024/ 1024)}M(${formatNumber(percentage)}%)`
             }
         })
         if (!get(mediaRes, '_blob', null)) {
@@ -619,7 +692,7 @@
                         }).format(completedQuantity / total * 100)
 
                         data[href].percentage = percentage
-                        data[href].message = `中${completedQuantity}/${total}（${percentage}%）`
+                        data[href].message = `中${completedQuantity}/${total}(${percentage}%)`
                     }
                 }))
             )
@@ -650,7 +723,7 @@
         return true
     }
 
-    // 下载（默认）
+    // 下载(默认)
     async function DownLoadDefault({
         href,
         urlData,
@@ -673,7 +746,7 @@
                     }).format(completedQuantity / total * 100)
 
                     data[href].percentage = percentage
-                    data[href].message = `中${completedQuantity}/${total}（${percentage}%）`
+                    data[href].message = `中${completedQuantity}/${total}(${percentage}%)`
                 }
             }))
         )
@@ -745,6 +818,7 @@
         text,
         isLongText
     }) {
+        filterData()
 
         if (data[href].isLive) {
             data[href].message = message.isLiveError
@@ -773,7 +847,7 @@
                 isLongText
             })
         } else {
-            // 下载（默认）
+            // 下载(默认)
             isSuccess = await DownLoadDefault({
                 href,
                 urlData,
@@ -820,13 +894,13 @@
         <div class="container">
             <div class="showMessage"></div>
             <div class="editName">
-                <span>可选下载名（【点击】或【拖拽到下方】）</span>
+                <span>可选下载名(【点击】或【拖拽到下方】)</span>
                 <ul class="unactive">
                     ${[...Object.keys(nameAll)].filter(item=>!nameArr.includes(item)).map(item=>{
                         return `<li data-id="${item}" draggable="true">${nameAll[item]}</li>`
                     }).join('')}
                 </ul>
-                <span>当前下载名（【用户名】为必选）</span>
+                <span>当前下载名(【用户名】为必选)</span>
                 <ul class="active">
                     ${nameArr.map(item=>{
                         return `<li data-id="${item}" draggable="true">${nameAll[item]}</li>`
@@ -914,16 +988,17 @@
         const href = $(this).find(cardHeadAStr).attr('href')
 
         data[href] = {
+            name: href,
             urlData: {},
             text: '',
             title: '',
             message: '',
             isLive: false, // 直播资源
             isLongText: false,
-            name: href,
             total: 0,
             completedQuantity: 0,
-            percentage: 0
+            percentage: 0,
+            startTime: Number(new Date()),
         }
 
         const {
@@ -966,6 +1041,7 @@
 
         data[href].completedQuantity = 0
         data[href].message = message.getReady
+        data[href].startTime = Number(new Date())
 
         main({
             href,
@@ -1003,28 +1079,6 @@
         subtree: true
     });
 
-    const config = {
-        isSpecialHandlingName: {
-            name: '替换下载名中【特殊符号】为下划线【_】',
-            id: null,
-            value: GM_getValue('isSpecialHandlingName', false)
-        },
-        isAutoHide: {
-            name: '左侧消息自动消失',
-            id: null,
-            value: GM_getValue('isAutoHide', false)
-        },
-        isShowActive: {
-            name: '左侧消息过滤【已经完成】',
-            id: null,
-            value: GM_getValue('isShowActive', false)
-        },
-        isIncludesText: {
-            name: '下载文件中包含【微博文本】',
-            id: null,
-            value: GM_getValue('isIncludesText', false)
-        }
-    }
 
     function updateMenuCommand() {
         [...Object.keys(config)].forEach(item => {
@@ -1045,7 +1099,8 @@
     }
     updateMenuCommand()
 
-    GM_addStyle(`body{--yellow:#ff8200;--red:#ff3852}.head-info_info_2AspQ:not(.Feed_retweetHeadInfo_Tl4Ld)::after,div.card-feed div.from::after{content:"下载" attr(show-text);color:var(--yellow);cursor:pointer;float:right}.Main_full_1dfQX.isFirst .head-info_info_2AspQ:not(.Feed_retweetHeadInfo_Tl4Ld)::after,.main-full.isFirst div.card-feed div.from::after{animation:wobble infinite 1s alternate}@keyframes wobble{from{-webkit-transform:translate3d(0,0,0);transform:translate3d(0,0,0)}15%{-webkit-transform:translate3d(-25%,0,0) rotate3d(0,0,1,-5deg);transform:translate3d(-25%,0,0) rotate3d(0,0,1,-5deg)}30%{-webkit-transform:translate3d(20%,0,0) rotate3d(0,0,1,3deg);transform:translate3d(20%,0,0) rotate3d(0,0,1,3deg)}45%{-webkit-transform:translate3d(-15%,0,0) rotate3d(0,0,1,-3deg);transform:translate3d(-15%,0,0) rotate3d(0,0,1,-3deg)}60%{-webkit-transform:translate3d(10%,0,0) rotate3d(0,0,1,2deg);transform:translate3d(10%,0,0) rotate3d(0,0,1,2deg)}75%{-webkit-transform:translate3d(-5%,0,0) rotate3d(0,0,1,-1deg);transform:translate3d(-5%,0,0) rotate3d(0,0,1,-1deg)}to{-webkit-transform:translate3d(0,0,0);transform:translate3d(0,0,0)}}.Frame_content_3XrxZ #wah0713,.m-main #wah0713{font-size:12px;font-weight:700}.Frame_content_3XrxZ #wah0713.out,.m-main #wah0713.out{opacity:0}.Frame_content_3XrxZ #wah0713.out:hover,.m-main #wah0713.out:hover{opacity:1}.Frame_content_3XrxZ #wah0713 .container,.m-main #wah0713 .container{position:fixed;left:0;z-index:1}.Frame_content_3XrxZ #wah0713:hover .editName,.Frame_content_3XrxZ #wah0713:hover .input-box,.m-main #wah0713:hover .editName,.m-main #wah0713:hover .input-box{display:block}.Frame_content_3XrxZ #wah0713 input,.m-main #wah0713 input{width:3em;color:var(--yellow);border-width:1px;outline:0;background-color:transparent}.Frame_content_3XrxZ #wah0713 .input-box,.m-main #wah0713 .input-box{display:none}.Frame_content_3XrxZ #wah0713 .showMessage>p,.m-main #wah0713 .showMessage>p{line-height:16px;margin:4px}.Frame_content_3XrxZ #wah0713 .showMessage>p span,.m-main #wah0713 .showMessage>p span{color:#333;vertical-align:top}.Frame_content_3XrxZ #wah0713 .showMessage>p span.red,.m-main #wah0713 .showMessage>p span.red{color:var(--yellow)}.Frame_content_3XrxZ #wah0713 .showMessage>p span.red.downloadBtn,.m-main #wah0713 .showMessage>p span.red.downloadBtn{cursor:pointer}.Frame_content_3XrxZ #wah0713 .showMessage>p a,.m-main #wah0713 .showMessage>p a{color:transparent;overflow:hidden;text-overflow:ellipsis;max-width:300px;display:inline-block;white-space:nowrap;-webkit-background-clip:text}.Frame_content_3XrxZ #wah0713 .showMessage>p a:hover,.m-main #wah0713 .showMessage>p a:hover{text-decoration:none}.Frame_content_3XrxZ #wah0713 .editName,.m-main #wah0713 .editName{display:none;border:1px solid #ccc;padding:2px;border-radius:6px;user-select:none}.Frame_content_3XrxZ #wah0713 .editName ul,.m-main #wah0713 .editName ul{list-style:none;display:flex;height:20px;margin:0;padding:0 10px 0 0;background-color:#fafafa}.Frame_content_3XrxZ #wah0713 .editName li,.m-main #wah0713 .editName li{height:20px;line-height:20px;background:var(--red);color:#fff;padding-inline:3px;margin-left:2px;font-size:12px;cursor:grab;border-radius:5px}.Frame_content_3XrxZ #wah0713 .unactive li,.m-main #wah0713 .unactive li{background:var(--yellow)}.Frame_content_3XrxZ #wah0713 .outline,.m-main #wah0713 .outline{outline:2px solid #119da6}
+    GM_addStyle(`
+body{--yellow:#ff8200;--red:#ff3852}.head-info_info_2AspQ:not(.Feed_retweetHeadInfo_Tl4Ld)::after,div.card-feed div.from::after{content:"下载" attr(show-text);color:var(--yellow);cursor:pointer;float:right}.Main_full_1dfQX.isFirst .head-info_info_2AspQ:not(.Feed_retweetHeadInfo_Tl4Ld)::after,.main-full.isFirst div.card-feed div.from::after{animation:wobble infinite 1s alternate}@keyframes wobble{from{-webkit-transform:translate3d(0,0,0);transform:translate3d(0,0,0)}15%{-webkit-transform:translate3d(-25%,0,0) rotate3d(0,0,1,-5deg);transform:translate3d(-25%,0,0) rotate3d(0,0,1,-5deg)}30%{-webkit-transform:translate3d(20%,0,0) rotate3d(0,0,1,3deg);transform:translate3d(20%,0,0) rotate3d(0,0,1,3deg)}45%{-webkit-transform:translate3d(-15%,0,0) rotate3d(0,0,1,-3deg);transform:translate3d(-15%,0,0) rotate3d(0,0,1,-3deg)}60%{-webkit-transform:translate3d(10%,0,0) rotate3d(0,0,1,2deg);transform:translate3d(10%,0,0) rotate3d(0,0,1,2deg)}75%{-webkit-transform:translate3d(-5%,0,0) rotate3d(0,0,1,-1deg);transform:translate3d(-5%,0,0) rotate3d(0,0,1,-1deg)}to{-webkit-transform:translate3d(0,0,0);transform:translate3d(0,0,0)}}.Frame_content_3XrxZ #wah0713,.m-main #wah0713{font-size:12px;font-weight:700}.Frame_content_3XrxZ #wah0713.out,.m-main #wah0713.out{opacity:0}.Frame_content_3XrxZ #wah0713.out:hover,.m-main #wah0713.out:hover{opacity:1}.Frame_content_3XrxZ #wah0713 .container,.m-main #wah0713 .container{position:fixed;left:0;z-index:1}.Frame_content_3XrxZ #wah0713:hover .editName,.Frame_content_3XrxZ #wah0713:hover .input-box,.m-main #wah0713:hover .editName,.m-main #wah0713:hover .input-box{display:block}.Frame_content_3XrxZ #wah0713 input,.m-main #wah0713 input{width:3em;color:var(--yellow);border-width:1px;outline:0;background-color:transparent}.Frame_content_3XrxZ #wah0713 .input-box,.m-main #wah0713 .input-box{display:none}.Frame_content_3XrxZ #wah0713 .showMessage>p,.m-main #wah0713 .showMessage>p{line-height:16px;margin:4px}.Frame_content_3XrxZ #wah0713 .showMessage>p span,.m-main #wah0713 .showMessage>p span{color:#333;vertical-align:top}.Frame_content_3XrxZ #wah0713 .showMessage>p span.red,.m-main #wah0713 .showMessage>p span.red{color:var(--yellow)}.Frame_content_3XrxZ #wah0713 .showMessage>p span.red.downloadBtn,.m-main #wah0713 .showMessage>p span.red.downloadBtn{cursor:pointer}.Frame_content_3XrxZ #wah0713 .showMessage>p a,.m-main #wah0713 .showMessage>p a{color:transparent;overflow:hidden;text-overflow:ellipsis;max-width:300px;display:inline-block;white-space:nowrap;-webkit-background-clip:text}.Frame_content_3XrxZ #wah0713 .showMessage>p a:hover,.m-main #wah0713 .showMessage>p a:hover{text-decoration:none}.Frame_content_3XrxZ #wah0713 .editName,.m-main #wah0713 .editName{display:none;border:1px solid #ccc;padding:2px;border-radius:6px;user-select:none}.Frame_content_3XrxZ #wah0713 .editName ul,.m-main #wah0713 .editName ul{list-style:none;display:flex;height:20px;margin:0;padding:0 10px 0 0;background-color:#fafafa}.Frame_content_3XrxZ #wah0713 .editName li,.m-main #wah0713 .editName li{height:20px;line-height:20px;background:var(--red);color:#fff;padding-inline:3px;margin-left:2px;font-size:12px;cursor:grab;border-radius:5px}.Frame_content_3XrxZ #wah0713 .unactive li,.m-main #wah0713 .unactive li{background:var(--yellow)}.Frame_content_3XrxZ #wah0713 .outline,.m-main #wah0713 .outline{outline:2px solid #119da6}
 `)
 
     // // debugJS

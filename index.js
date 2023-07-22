@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         微博一键下载(9宫格&&视频)
 // @namespace    https://github.com/wah0713/getWeiboResources
-// @version      2.0.2
+// @version      2.1.0
 // @description  一个兴趣使然的脚本，微博一键下载脚本。傻瓜式🐵(简单🍎、易用🧩、可靠💪)
 // @supportURL   https://github.com/wah0713/getWeiboResources/issues
 // @updateURL    https://greasyfork.org/scripts/454816/code/download.user.js
@@ -96,6 +96,34 @@
     }
     let nameArr = GM_getValue('nameArr', ['userName', 'time'])
 
+    const config = {
+        isSpecialHandlingName: {
+            name: '替换下载名中【特殊符号】为下划线【_】',
+            id: null,
+            value: GM_getValue('isSpecialHandlingName', false)
+        },
+        isSaveHistory: {
+            name: '左侧消息是否保存',
+            id: null,
+            value: GM_getValue('isSaveHistory', false)
+        },
+        isAutoHide: {
+            name: '左侧消息自动消失',
+            id: null,
+            value: GM_getValue('isAutoHide', false)
+        },
+        isShowActive: {
+            name: '左侧消息过滤【已经完成】',
+            id: null,
+            value: GM_getValue('isShowActive', false)
+        },
+        isIncludesText: {
+            name: '下载文件中包含【微博文本】',
+            id: null,
+            value: GM_getValue('isIncludesText', false)
+        }
+    }
+
     // 递归proxy
     function reactive(data, callBack) {
         return new Proxy(data, {
@@ -120,6 +148,46 @@
         }
     })
 
+    const updateCacheData = () => {
+        const cacheData = JSON.parse(GM_getValue('cacheData', '{}'));
+        [...Object.keys(cacheData)].forEach(item => {
+            data[item] = cacheData[item]
+        })
+    }
+
+    if (config.isSaveHistory.value) {
+        updateCacheData()
+        notice.messagelist = JSON.parse(GM_getValue('noticeMessagelist', '[]'))
+
+        document.addEventListener('visibilitychange', function () {
+            if (!document.hidden) return false
+            notice.messagelist = JSON.parse(GM_getValue('noticeMessagelist', '[]'))
+            updateCacheData()
+        });
+    }
+
+    const filterData = () => {
+        const keyList = Object.keys(data)
+        const max = 50
+        if (keyList.length > max) {
+            const newKeyList = keyList.sort((a, b) => {
+                return data[b].startTime - data[a].startTime
+            })
+            newKeyList.slice(max).forEach(item => {
+                delete data[item]
+            })
+        }
+
+        const cacheData = JSON.parse(JSON.stringify(data));
+        [...Object.keys(cacheData)].forEach(item => {
+            cacheData[item].completedQuantity = null
+            // 下载成功
+            cacheData[item].message = message.finish
+        })
+
+        GM_setValue('cacheData', JSON.stringify(cacheData))
+    }
+
     function handleMessage(target, value) {
         const {
             name,
@@ -132,19 +200,7 @@
             return false
         }
 
-        const list = [...Object.keys(data)]
-        notice.completedQuantity = list.length;
-        list.forEach(item => {
-            let {
-                completedQuantity,
-                total,
-            } = data[item]
-
-            if (completedQuantity === total) {
-                notice.completedQuantity--
-            }
-        })
-
+        // 左侧消息是否保存
         if (config.isShowActive.value) {
             notice.messagelist = notice.messagelist.filter(item => item.message !== '下载完成')
         }
@@ -155,6 +211,23 @@
             title,
             percentage,
             message: `下载${value}`
+        })
+
+        const list = [...Object.keys(data)]
+        notice.completedQuantity = list.length;
+        list.forEach(item => {
+            let {
+                completedQuantity,
+                total,
+            } = data[item]
+
+            if (completedQuantity === total) {
+                notice.completedQuantity--
+                GM_setValue('noticeMessagelist', JSON.stringify(notice.messagelist))
+            } else if (completedQuantity === null) {
+                notice.completedQuantity--
+            }
+
         })
 
         const tempList = JSON.parse(JSON.stringify(notice.messagelist))
@@ -745,6 +818,7 @@
         text,
         isLongText
     }) {
+        filterData()
 
         if (data[href].isLive) {
             data[href].message = message.isLiveError
@@ -923,7 +997,8 @@
             isLongText: false,
             total: 0,
             completedQuantity: 0,
-            percentage: 0
+            percentage: 0,
+            startTime: Number(new Date()),
         }
 
         const {
@@ -966,6 +1041,7 @@
 
         data[href].completedQuantity = 0
         data[href].message = message.getReady
+        data[href].startTime = Number(new Date())
 
         main({
             href,
@@ -1003,28 +1079,6 @@
         subtree: true
     });
 
-    const config = {
-        isSpecialHandlingName: {
-            name: '替换下载名中【特殊符号】为下划线【_】',
-            id: null,
-            value: GM_getValue('isSpecialHandlingName', false)
-        },
-        isAutoHide: {
-            name: '左侧消息自动消失',
-            id: null,
-            value: GM_getValue('isAutoHide', false)
-        },
-        isShowActive: {
-            name: '左侧消息过滤【已经完成】',
-            id: null,
-            value: GM_getValue('isShowActive', false)
-        },
-        isIncludesText: {
-            name: '下载文件中包含【微博文本】',
-            id: null,
-            value: GM_getValue('isIncludesText', false)
-        }
-    }
 
     function updateMenuCommand() {
         [...Object.keys(config)].forEach(item => {
