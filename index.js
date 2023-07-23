@@ -347,7 +347,10 @@
     function isEmptyFile(res) {
         const size = get(res, '_blob.size', 0)
         const finalUrl = get(res, 'finalUrl', '')
-        if (finalUrl.endsWith('gif#101') || size <= 200) {
+        if (finalUrl.endsWith('gif#101') ||
+            size <= 200 ||
+            // gif
+            (/\.gif\r\n/.test(res.responseHeaders) && size <= 6000)) {
             return true
         }
         return false
