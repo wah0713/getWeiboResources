@@ -89,6 +89,7 @@
     const nameAll = {
         userName: '用户名',
         userID: '用户ID',
+        mblogid: '微博(文章)ID',
         time: '时间',
         geoName: '定位',
         region: 'IP区域',
@@ -148,6 +149,7 @@
         }
     })
 
+    // 读取缓存中的data
     const updateCacheData = () => {
         const cacheData = JSON.parse(GM_getValue('cacheData', '{}'));
         [...Object.keys(cacheData)].forEach(item => {
@@ -156,9 +158,11 @@
     }
 
     if (config.isSaveHistory.value) {
-        updateCacheData()
+        // 第一次打开页面
         notice.messagelist = JSON.parse(GM_getValue('noticeMessagelist', '[]'))
+        updateCacheData()
 
+        // 打开不同页签时,加载data
         document.addEventListener('visibilitychange', function () {
             if (!document.hidden) return false
             notice.messagelist = JSON.parse(GM_getValue('noticeMessagelist', '[]'))
@@ -170,9 +174,11 @@
         const keyList = Object.keys(data)
         const max = 50
         if (keyList.length > max) {
+            // 按[下载时间]排序
             const newKeyList = keyList.sort((a, b) => {
                 return data[b].startTime - data[a].startTime
             })
+            // 删除data过多的部分
             newKeyList.slice(max).forEach(item => {
                 delete data[item]
             })
@@ -185,6 +191,7 @@
             cacheData[item].message = message.finish
         })
 
+        // 保存data
         GM_setValue('cacheData', JSON.stringify(cacheData))
     }
 
@@ -258,6 +265,7 @@
             mix_media_info,
             text_raw,
             isLongText,
+            mblogid,
             region_name,
             geo,
             created_at,
@@ -336,6 +344,7 @@
             time,
             geo,
             isLongText,
+            mblogid,
             text: text_raw,
             regionName: region_name,
             userName: screen_name,
@@ -373,6 +382,7 @@
         regionName,
         geo,
         text,
+        mblogid,
     }) {
 
         const region = regionName && regionName.match(/\s(.*)/) && RegExp.$1 || ''
@@ -386,6 +396,7 @@
             region,
             geoName,
             text,
+            mblogid,
         }
 
         let title = ''
@@ -542,9 +553,9 @@
         }
     }
 
+    // 将blob转为text
     function blobToText(blob) {
         return new Promise((resolve, reject) => {
-            // 将blob转为text
             let reader = new FileReader()
             reader.readAsText(blob, "utf-8")
             reader.addEventListener("loadend", () => {
@@ -1014,6 +1025,7 @@
             geo,
             text,
             isLongText,
+            mblogid,
         } = await getFileUrlByInfo(this)
 
         data[href].title = getFileName({
@@ -1022,7 +1034,8 @@
             userID,
             regionName,
             geo,
-            text
+            text,
+            mblogid
         })
         data[href].urlData = urlData
         data[href].text = text

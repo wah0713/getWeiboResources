@@ -89,6 +89,7 @@
     const nameAll = {
         userName: '用户名',
         userID: '用户ID',
+        mblogid: '微博(文章)ID',
         time: '时间',
         geoName: '定位',
         region: 'IP区域',
@@ -157,6 +158,7 @@
     }
 
     if (config.isSaveHistory.value) {
+        // 第一次打开页面
         notice.messagelist = JSON.parse(GM_getValue('noticeMessagelist', '[]'))
         updateCacheData()
 
@@ -263,6 +265,7 @@
             mix_media_info,
             text_raw,
             isLongText,
+            mblogid,
             region_name,
             geo,
             created_at,
@@ -341,6 +344,7 @@
             time,
             geo,
             isLongText,
+            mblogid,
             text: text_raw,
             regionName: region_name,
             userName: screen_name,
@@ -378,6 +382,7 @@
         regionName,
         geo,
         text,
+        mblogid,
     }) {
 
         const region = regionName && regionName.match(/\s(.*)/) && RegExp.$1 || ''
@@ -391,6 +396,7 @@
             region,
             geoName,
             text,
+            mblogid,
         }
 
         let title = ''
@@ -1019,6 +1025,7 @@
             geo,
             text,
             isLongText,
+            mblogid,
         } = await getFileUrlByInfo(this)
 
         data[href].title = getFileName({
@@ -1027,7 +1034,8 @@
             userID,
             regionName,
             geo,
-            text
+            text,
+            mblogid
         })
         data[href].urlData = urlData
         data[href].text = text
