@@ -58,6 +58,7 @@ div.card-feed div.from::after,
 }
 .m-main #wah0713 .container,
 .Frame_content_3XrxZ #wah0713 .container {
+  background-color: var(--frame-background);
   position: fixed;
   left: 0;
   z-index: 1;

@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         微博一键下载(9宫格&&视频)
 // @namespace    https://github.com/wah0713/getWeiboResources
-// @version      2.1.1
+// @version      2.1.2
 // @description  一个兴趣使然的脚本，微博一键下载脚本。傻瓜式🐵(简单🍎、易用🧩、可靠💪)
 // @supportURL   https://github.com/wah0713/getWeiboResources/issues
 // @updateURL    https://greasyfork.org/scripts/454816/code/download.user.js
@@ -68,6 +68,7 @@
     let timer = null
     // 消息
     const message = {
+        init: '', // 初始化
         getReady: '准备中',
         isEmptyError: '失败，未找到资源',
         // todo 说不定以后想做直播资源下载
@@ -150,7 +151,7 @@
     })
 
     // 读取缓存中的data
-    const updateCacheData = () => {
+    const getCacheData = () => {
         const cacheData = JSON.parse(GM_getValue('cacheData', '{}'));
         [...Object.keys(cacheData)].forEach(item => {
             data[item] = cacheData[item]
@@ -160,13 +161,13 @@
     if (config.isSaveHistory.value) {
         // 第一次打开页面
         notice.messagelist = JSON.parse(GM_getValue('noticeMessagelist', '[]'))
-        updateCacheData()
+        getCacheData()
 
         // 打开不同页签时,加载data
         document.addEventListener('visibilitychange', function () {
             if (!document.hidden) return false
             notice.messagelist = JSON.parse(GM_getValue('noticeMessagelist', '[]'))
-            updateCacheData()
+            getCacheData()
         });
     }
 
@@ -183,12 +184,18 @@
                 delete data[item]
             })
         }
+    }
 
+    const updateCacheData = () => {
         const cacheData = JSON.parse(JSON.stringify(data));
         [...Object.keys(cacheData)].forEach(item => {
             cacheData[item].completedQuantity = null
-            // 下载成功
-            cacheData[item].message = message.finish
+            let str = message.finish
+            // 未下载完成状态初始化
+            if (cacheData[item].message !== message.finish) {
+                str = message.init
+            }
+            cacheData[item].message = str
         })
 
         // 保存data
@@ -230,7 +237,17 @@
 
             if (completedQuantity === total) {
                 notice.completedQuantity--
-                GM_setValue('noticeMessagelist', JSON.stringify(notice.messagelist))
+                GM_setValue('noticeMessagelist', JSON.stringify(notice.messagelist.map(item => {
+                    let str = item.message
+                    if (item.message !== ('下载' + message.finish)) {
+                        str = '下载' + message.init
+                    }
+                    return {
+                        ...item,
+                        message: str
+                    }
+                })))
+
             } else if (completedQuantity === null) {
                 notice.completedQuantity--
             }
@@ -833,6 +850,7 @@
         isLongText
     }) {
         filterData()
+        updateCacheData()
 
         if (data[href].isLive) {
             data[href].message = message.isLiveError
@@ -881,6 +899,8 @@
             // 下载失败
             data[href].message = message.isUnkownError
         }
+
+        updateCacheData()
     }
 
     // 模拟esc
@@ -988,7 +1008,7 @@
     }
 
     $cardList.on('click', `${cardHeadStr}:not(.Feed_retweetHeadInfo_Tl4Ld)`, async function (event) {
-        if (event.target.className !== event.currentTarget.className || ![...Object.values(message).filter(item => item !== message.getReady), undefined, ''].includes(
+        if (event.target.className !== event.currentTarget.className || ![...Object.values(message).filter(item => item !== message.getReady), undefined].includes(
                 $(this).attr('show-text')
             )) return false
 
@@ -1052,7 +1072,7 @@
     })
 
     $('.showMessage').on('click', '.downloadBtn', async function (event) {
-        if (event.target.className !== event.currentTarget.className || ![...Object.values(message).filter(item => item !== message.getReady), undefined, ''].includes($(this).text().replace(/^下载/, ''))) return false
+        if (event.target.className !== event.currentTarget.className || ![...Object.values(message).filter(item => item !== message.getReady), undefined].includes($(this).text().replace(/^下载/, ''))) return false
         const href = $(this).data('href')
 
         data[href].completedQuantity = 0
