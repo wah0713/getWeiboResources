@@ -190,12 +190,10 @@
         const cacheData = JSON.parse(JSON.stringify(data));
         [...Object.keys(cacheData)].forEach(item => {
             cacheData[item].completedQuantity = null
-            let str = message.finish
             // 未下载完成状态初始化
             if (cacheData[item].message !== message.finish) {
-                str = message.init
+                cacheData[item].message = message.init
             }
-            cacheData[item].message = str
         })
 
         // 保存data
@@ -216,7 +214,7 @@
 
         // 左侧消息是否保存
         if (config.isShowActive.value) {
-            notice.messagelist = notice.messagelist.filter(item => item.message !== '下载完成')
+            notice.messagelist = notice.messagelist.filter(item => item.message !== '下载' + message.finish)
         }
 
         notice.messagelist = notice.messagelist.filter(item => item.title !== title).slice(-(messagesNumber - 1))
