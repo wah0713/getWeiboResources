@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         微博一键下载(9宫格&&视频)
 // @namespace    https://github.com/wah0713/getWeiboResources
-// @version      2.1.2
+// @version      2.2.0
 // @description  一个兴趣使然的脚本，微博一键下载脚本。傻瓜式🐵(简单🍎、易用🧩、可靠💪)
 // @supportURL   https://github.com/wah0713/getWeiboResources/issues
 // @updateURL    https://greasyfork.org/scripts/454816/code/download.user.js
@@ -123,6 +123,11 @@
             name: '下载文件中包含【微博文本】',
             id: null,
             value: GM_getValue('isIncludesText', false)
+        },
+        isVideoHD: {
+            name: '是否下载最高清的视频',
+            id: null,
+            value: GM_getValue('isVideoHD', false)
         }
     }
 
@@ -328,14 +333,21 @@
 
         // 图片加视频
         if (mix_media_info) {
-            mix_media_info.items.forEach((ele, index) => {
+            for (let index = 0; index < mix_media_info.items.length; index++) {
+                const ele = mix_media_info.items[index];
                 const afterName = mix_media_info.items.length === 1 ? '' : `-part${formatNumber(index + 1)}`
 
                 let imgUrl = null
                 let mediaUrl = null
+                let videoHD = null
                 if (ele.type === "video") {
+                    objectId = get(ele, 'data.object_id', '')
+                    if (config.isVideoHD.value && objectId) {
+                        videoHD = await getVideoHD(objectId)
+                    }
+
                     imgUrl = get(ele, 'data.pic_info.pic_big.url', '')
-                    mediaUrl = get(ele, 'data.media_info.mp4_sd_url', '')
+                    mediaUrl = videoHD || get(ele, 'data.media_info.stream_url_hd', get(ele, 'data.media_info.stream_url', ''))
                 } else {
                     imgUrl = get(ele, 'data.mw2000.url', '')
                 }
@@ -345,7 +357,7 @@
                 if (mediaUrl) {
                     urlData[`${afterName}.${getSuffixName(mediaUrl)}`] = mediaUrl
                 }
-            })
+            }
         }
 
         // 视频
@@ -552,6 +564,40 @@
                 },
                 onerror: (res) => {
                     console.error(`getInfoById-onerror`, res)
+                    resolve(null)
+                }
+            })
+        })
+    }
+
+    // 获取最高分辨率视频
+    function getVideoHD(id) {
+        const formData = new FormData();
+        formData.append("data", `{"Component_Play_Playinfo":{"oid":"${id}"}}`);
+        return new Promise((resolve, reject) => {
+            GM_xmlhttpRequest({
+                method: 'post',
+                responseType: 'json',
+                url: `https://weibo.com/tv/api/component?page=/tv/show/${id}`,
+                data: formData,
+                headers: {
+                    referer: 'https://weibo.com/',
+                },
+                onload: (res) => {
+                    isDebug && console.log(`getVideoHD-onload`, res)
+                    const urls = get(res.response, 'data.Component_Play_Playinfo.urls', {})
+                    const newUrls = Object.values(urls).map(item => 'https:' + item)
+                    const c = newUrls.sort((a, b) => {
+                        (new URLSearchParams(a)).get("template").match(/(\d+)x(\d+)/);
+                        const A = RegExp.$1 * RegExp.$2;
+                        (new URLSearchParams(b)).get("template").match(/(\d+)x(\d+)/);
+                        const B = RegExp.$1 * RegExp.$2
+                        return B - A
+                    })
+                    resolve(c[0])
+                },
+                onerror: (res) => {
+                    console.error(`getVideoHD-onerror`, res)
                     resolve(null)
                 }
             })

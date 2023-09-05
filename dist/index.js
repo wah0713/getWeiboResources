@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         微博一键下载(9宫格&&视频)
 // @namespace    https://github.com/wah0713/getWeiboResources
-// @version      2.1.2
+// @version      2.2.0
 // @description  一个兴趣使然的脚本，微博一键下载脚本。傻瓜式🐵(简单🍎、易用🧩、可靠💪)
 // @supportURL   https://github.com/wah0713/getWeiboResources/issues
 // @updateURL    https://greasyfork.org/scripts/454816/code/download.user.js
@@ -123,6 +123,11 @@
             name: '下载文件中包含【微博文本】',
             id: null,
             value: GM_getValue('isIncludesText', false)
+        },
+        isVideoHD: {
+            name: '是否下载最高清的视频',
+            id: null,
+            value: GM_getValue('isVideoHD', false)
         }
     }
 
@@ -328,14 +333,21 @@
 
         // 图片加视频
         if (mix_media_info) {
-            mix_media_info.items.forEach((ele, index) => {
+            for (let index = 0; index < mix_media_info.items.length; index++) {
+                const ele = mix_media_info.items[index];
                 const afterName = mix_media_info.items.length === 1 ? '' : `-part${formatNumber(index + 1)}`
 
                 let imgUrl = null
                 let mediaUrl = null
+                let videoHD = null
                 if (ele.type === "video") {
+                    objectId = get(ele, 'data.object_id', '')
+                    if (config.isVideoHD.value && objectId) {
+                        videoHD = await getVideoHD(objectId)
+                    }
+
                     imgUrl = get(ele, 'data.pic_info.pic_big.url', '')
-                    mediaUrl = get(ele, 'data.media_info.mp4_sd_url', '')
+                    mediaUrl = videoHD || get(ele, 'data.media_info.stream_url_hd', get(ele, 'data.media_info.stream_url', ''))
                 } else {
                     imgUrl = get(ele, 'data.mw2000.url', '')
                 }
@@ -345,7 +357,7 @@
                 if (mediaUrl) {
                     urlData[`${afterName}.${getSuffixName(mediaUrl)}`] = mediaUrl
                 }
-            })
+            }
         }
 
         // 视频
@@ -552,6 +564,40 @@
                 },
                 onerror: (res) => {
                     console.error(`getInfoById-onerror`, res)
+                    resolve(null)
+                }
+            })
+        })
+    }
+
+    // 获取最高分辨率视频
+    function getVideoHD(id) {
+        const formData = new FormData();
+        formData.append("data", `{"Component_Play_Playinfo":{"oid":"${id}"}}`);
+        return new Promise((resolve, reject) => {
+            GM_xmlhttpRequest({
+                method: 'post',
+                responseType: 'json',
+                url: `https://weibo.com/tv/api/component?page=/tv/show/${id}`,
+                data: formData,
+                headers: {
+                    referer: 'https://weibo.com/',
+                },
+                onload: (res) => {
+                    isDebug && console.log(`getVideoHD-onload`, res)
+                    const urls = get(res.response, 'data.Component_Play_Playinfo.urls', {})
+                    const newUrls = Object.values(urls).map(item => 'https:' + item)
+                    const c = newUrls.sort((a, b) => {
+                        (new URLSearchParams(a)).get("template").match(/(\d+)x(\d+)/);
+                        const A = RegExp.$1 * RegExp.$2;
+                        (new URLSearchParams(b)).get("template").match(/(\d+)x(\d+)/);
+                        const B = RegExp.$1 * RegExp.$2
+                        return B - A
+                    })
+                    resolve(c[0])
+                },
+                onerror: (res) => {
+                    console.error(`getVideoHD-onerror`, res)
                     resolve(null)
                 }
             })
@@ -1133,7 +1179,8 @@
     }
     updateMenuCommand()
 
-    GM_addStyle(`body{--yellow:#ff8200;--red:#ff3852}.head-info_info_2AspQ:not(.Feed_retweetHeadInfo_Tl4Ld)::after,div.card-feed div.from::after{content:"下载" attr(show-text);color:var(--yellow);cursor:pointer;float:right}.Main_full_1dfQX.isFirst .head-info_info_2AspQ:not(.Feed_retweetHeadInfo_Tl4Ld)::after,.main-full.isFirst div.card-feed div.from::after{animation:wobble infinite 1s alternate}@keyframes wobble{from{-webkit-transform:translate3d(0,0,0);transform:translate3d(0,0,0)}15%{-webkit-transform:translate3d(-25%,0,0) rotate3d(0,0,1,-5deg);transform:translate3d(-25%,0,0) rotate3d(0,0,1,-5deg)}30%{-webkit-transform:translate3d(20%,0,0) rotate3d(0,0,1,3deg);transform:translate3d(20%,0,0) rotate3d(0,0,1,3deg)}45%{-webkit-transform:translate3d(-15%,0,0) rotate3d(0,0,1,-3deg);transform:translate3d(-15%,0,0) rotate3d(0,0,1,-3deg)}60%{-webkit-transform:translate3d(10%,0,0) rotate3d(0,0,1,2deg);transform:translate3d(10%,0,0) rotate3d(0,0,1,2deg)}75%{-webkit-transform:translate3d(-5%,0,0) rotate3d(0,0,1,-1deg);transform:translate3d(-5%,0,0) rotate3d(0,0,1,-1deg)}to{-webkit-transform:translate3d(0,0,0);transform:translate3d(0,0,0)}}.Frame_content_3XrxZ #wah0713,.m-main #wah0713{font-size:12px;font-weight:700}.Frame_content_3XrxZ #wah0713.out,.m-main #wah0713.out{opacity:0}.Frame_content_3XrxZ #wah0713.out:hover,.m-main #wah0713.out:hover{opacity:1}.Frame_content_3XrxZ #wah0713 .container,.m-main #wah0713 .container{background-color:var(--frame-background);position:fixed;left:0;z-index:1}.Frame_content_3XrxZ #wah0713:hover .editName,.Frame_content_3XrxZ #wah0713:hover .input-box,.m-main #wah0713:hover .editName,.m-main #wah0713:hover .input-box{display:block}.Frame_content_3XrxZ #wah0713 input,.m-main #wah0713 input{width:3em;color:var(--yellow);border-width:1px;outline:0;background-color:transparent}.Frame_content_3XrxZ #wah0713 .input-box,.m-main #wah0713 .input-box{display:none}.Frame_content_3XrxZ #wah0713 .showMessage>p,.m-main #wah0713 .showMessage>p{line-height:16px;margin:4px}.Frame_content_3XrxZ #wah0713 .showMessage>p span,.m-main #wah0713 .showMessage>p span{color:#333;vertical-align:top}.Frame_content_3XrxZ #wah0713 .showMessage>p span.red,.m-main #wah0713 .showMessage>p span.red{color:var(--yellow)}.Frame_content_3XrxZ #wah0713 .showMessage>p span.red.downloadBtn,.m-main #wah0713 .showMessage>p span.red.downloadBtn{cursor:pointer}.Frame_content_3XrxZ #wah0713 .showMessage>p a,.m-main #wah0713 .showMessage>p a{color:transparent;overflow:hidden;text-overflow:ellipsis;max-width:300px;display:inline-block;white-space:nowrap;-webkit-background-clip:text}.Frame_content_3XrxZ #wah0713 .showMessage>p a:hover,.m-main #wah0713 .showMessage>p a:hover{text-decoration:none}.Frame_content_3XrxZ #wah0713 .editName,.m-main #wah0713 .editName{display:none;border:1px solid #ccc;padding:2px;border-radius:6px;user-select:none}.Frame_content_3XrxZ #wah0713 .editName ul,.m-main #wah0713 .editName ul{list-style:none;display:flex;height:20px;margin:0;padding:0 10px 0 0;background-color:#fafafa}.Frame_content_3XrxZ #wah0713 .editName li,.m-main #wah0713 .editName li{height:20px;line-height:20px;background:var(--red);color:#fff;padding-inline:3px;margin-left:2px;font-size:12px;cursor:grab;border-radius:5px}.Frame_content_3XrxZ #wah0713 .unactive li,.m-main #wah0713 .unactive li{background:var(--yellow)}.Frame_content_3XrxZ #wah0713 .outline,.m-main #wah0713 .outline{outline:2px solid #119da6}
+    GM_addStyle(`
+body{--yellow:#ff8200;--red:#ff3852}.head-info_info_2AspQ:not(.Feed_retweetHeadInfo_Tl4Ld)::after,div.card-feed div.from::after{content:"下载" attr(show-text);color:var(--yellow);cursor:pointer;float:right}.Main_full_1dfQX.isFirst .head-info_info_2AspQ:not(.Feed_retweetHeadInfo_Tl4Ld)::after,.main-full.isFirst div.card-feed div.from::after{animation:wobble infinite 1s alternate}@keyframes wobble{from{-webkit-transform:translate3d(0,0,0);transform:translate3d(0,0,0)}15%{-webkit-transform:translate3d(-25%,0,0) rotate3d(0,0,1,-5deg);transform:translate3d(-25%,0,0) rotate3d(0,0,1,-5deg)}30%{-webkit-transform:translate3d(20%,0,0) rotate3d(0,0,1,3deg);transform:translate3d(20%,0,0) rotate3d(0,0,1,3deg)}45%{-webkit-transform:translate3d(-15%,0,0) rotate3d(0,0,1,-3deg);transform:translate3d(-15%,0,0) rotate3d(0,0,1,-3deg)}60%{-webkit-transform:translate3d(10%,0,0) rotate3d(0,0,1,2deg);transform:translate3d(10%,0,0) rotate3d(0,0,1,2deg)}75%{-webkit-transform:translate3d(-5%,0,0) rotate3d(0,0,1,-1deg);transform:translate3d(-5%,0,0) rotate3d(0,0,1,-1deg)}to{-webkit-transform:translate3d(0,0,0);transform:translate3d(0,0,0)}}.Frame_content_3XrxZ #wah0713,.m-main #wah0713{font-size:12px;font-weight:700}.Frame_content_3XrxZ #wah0713.out,.m-main #wah0713.out{opacity:0}.Frame_content_3XrxZ #wah0713.out:hover,.m-main #wah0713.out:hover{opacity:1}.Frame_content_3XrxZ #wah0713 .container,.m-main #wah0713 .container{background-color:var(--frame-background);position:fixed;left:0;z-index:1}.Frame_content_3XrxZ #wah0713:hover .editName,.Frame_content_3XrxZ #wah0713:hover .input-box,.m-main #wah0713:hover .editName,.m-main #wah0713:hover .input-box{display:block}.Frame_content_3XrxZ #wah0713 input,.m-main #wah0713 input{width:3em;color:var(--yellow);border-width:1px;outline:0;background-color:transparent}.Frame_content_3XrxZ #wah0713 .input-box,.m-main #wah0713 .input-box{display:none}.Frame_content_3XrxZ #wah0713 .showMessage>p,.m-main #wah0713 .showMessage>p{line-height:16px;margin:4px}.Frame_content_3XrxZ #wah0713 .showMessage>p span,.m-main #wah0713 .showMessage>p span{color:#333;vertical-align:top}.Frame_content_3XrxZ #wah0713 .showMessage>p span.red,.m-main #wah0713 .showMessage>p span.red{color:var(--yellow)}.Frame_content_3XrxZ #wah0713 .showMessage>p span.red.downloadBtn,.m-main #wah0713 .showMessage>p span.red.downloadBtn{cursor:pointer}.Frame_content_3XrxZ #wah0713 .showMessage>p a,.m-main #wah0713 .showMessage>p a{color:transparent;overflow:hidden;text-overflow:ellipsis;max-width:300px;display:inline-block;white-space:nowrap;-webkit-background-clip:text}.Frame_content_3XrxZ #wah0713 .showMessage>p a:hover,.m-main #wah0713 .showMessage>p a:hover{text-decoration:none}.Frame_content_3XrxZ #wah0713 .editName,.m-main #wah0713 .editName{display:none;border:1px solid #ccc;padding:2px;border-radius:6px;user-select:none}.Frame_content_3XrxZ #wah0713 .editName ul,.m-main #wah0713 .editName ul{list-style:none;display:flex;height:20px;margin:0;padding:0 10px 0 0;background-color:#fafafa}.Frame_content_3XrxZ #wah0713 .editName li,.m-main #wah0713 .editName li{height:20px;line-height:20px;background:var(--red);color:#fff;padding-inline:3px;margin-left:2px;font-size:12px;cursor:grab;border-radius:5px}.Frame_content_3XrxZ #wah0713 .unactive li,.m-main #wah0713 .unactive li{background:var(--yellow)}.Frame_content_3XrxZ #wah0713 .outline,.m-main #wah0713 .outline{outline:2px solid #119da6}
 `)
 
     // // debugJS
