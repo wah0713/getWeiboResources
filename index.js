@@ -339,15 +339,15 @@
 
                 let imgUrl = null
                 let mediaUrl = null
-                let videoHD = null
+                let videoHDUrl = null
                 if (ele.type === "video") {
                     objectId = get(ele, 'data.object_id', '')
                     if (config.isVideoHD.value && objectId) {
-                        videoHD = await getVideoHD(objectId)
+                        videoHDUrl = await getVideoHD(objectId)
                     }
 
                     imgUrl = get(ele, 'data.pic_info.pic_big.url', '')
-                    mediaUrl = videoHD || get(ele, 'data.media_info.stream_url_hd', get(ele, 'data.media_info.stream_url', ''))
+                    mediaUrl = videoHDUrl || get(ele, 'data.media_info.stream_url_hd', get(ele, 'data.media_info.stream_url', ''))
                 } else {
                     imgUrl = get(ele, 'data.mw2000.url', '')
                 }
