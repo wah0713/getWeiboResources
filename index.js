@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         微博一键下载(9宫格&&视频)
 // @namespace    https://github.com/wah0713/getWeiboResources
-// @version      2.2.0
+// @version      2.2.1
 // @description  一个兴趣使然的脚本，微博一键下载脚本。傻瓜式🐵(简单🍎、易用🧩、可靠💪)
 // @supportURL   https://github.com/wah0713/getWeiboResources/issues
 // @updateURL    https://greasyfork.org/scripts/454816/code/download.user.js
@@ -262,7 +262,7 @@
         $('#wah0713 .container .showMessage').html(`
             <p><span>进行中的下载任务数：</span><span class="red">${notice.completedQuantity}</span></p>
             ${tempList.reverse().map(item=>{
-                return `<p><a href="${item.href}" style="background-image: linear-gradient(to right,#333 ${item.percentage}%,#91c6ca 0);" target="_blank" title="打开微博详情">${item.title}</a><span>:</span><span data-href=${item.href} class="red downloadBtn" title="点击再次下载">${item.message}</span></p>`
+                return `<p><a href="${item.href}" style="background-image: linear-gradient(to right,var(--w-main) ${item.percentage}%,#91c6ca 0);" target="_blank" title="打开微博详情">${item.title}</a><span>:</span><span data-href=${item.href} class="red downloadBtn" title="点击再次下载">${item.message}</span></p>`
             }).join('')}
         `)
 
