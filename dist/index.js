@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         微博一键下载(9宫格&&视频)
 // @namespace    https://github.com/wah0713/getWeiboResources
-// @version      2.2.1
+// @version      2.3.0
 // @description  一个兴趣使然的脚本，微博一键下载脚本。傻瓜式🐵(简单🍎、易用🧩、可靠💪)
 // @supportURL   https://github.com/wah0713/getWeiboResources/issues
 // @updateURL    https://greasyfork.org/scripts/454816/code/download.user.js
@@ -101,33 +101,31 @@
     const config = {
         isSpecialHandlingName: {
             name: '替换下载名中【特殊符号】为下划线【_】',
-            id: null,
             value: GM_getValue('isSpecialHandlingName', false)
         },
         isSaveHistory: {
             name: '左侧消息是否保存',
-            id: null,
             value: GM_getValue('isSaveHistory', false)
         },
         isAutoHide: {
             name: '左侧消息自动消失',
-            id: null,
             value: GM_getValue('isAutoHide', false)
         },
         isShowActive: {
             name: '左侧消息过滤【已经完成】',
-            id: null,
             value: GM_getValue('isShowActive', false)
         },
         isIncludesText: {
             name: '下载文件中包含【微博文本】',
-            id: null,
             value: GM_getValue('isIncludesText', false)
         },
         isVideoHD: {
             name: '是否下载最高清的视频',
-            id: null,
             value: GM_getValue('isVideoHD', false)
+        },
+        isPack: {
+            name: '是否打包下载(压缩包)',
+            value: GM_getValue('isPack', true)
         }
     }
 
@@ -222,7 +220,7 @@
             notice.messagelist = notice.messagelist.filter(item => item.message !== '下载' + message.finish)
         }
 
-        notice.messagelist = notice.messagelist.filter(item => item.title !== title).slice(-(messagesNumber - 1))
+        notice.messagelist = notice.messagelist.filter(item => item.href !== name).slice(-(messagesNumber - 1))
         notice.messagelist.push({
             href: name,
             title,
@@ -502,7 +500,13 @@
                 },
                 onload: (res) => {
                     isDebug && console.log(`getFileBlob-onload`, res)
-                    options.callback && options.callback()
+
+                    const returnBlob = {
+                        ...res,
+                        _blob: res.response,
+                        _lastName
+                    }
+                    options.callback && options.callback(returnBlob)
 
                     // 下载失败，也会正常返回空文件
                     const {
@@ -513,11 +517,7 @@
                         resolve(null)
                     }
 
-                    resolve({
-                        ...res,
-                        _blob: res.response,
-                        _lastName
-                    })
+                    resolve(returnBlob)
                 },
                 onerror: (res) => {
                     console.error(`getFileBlob-onerror`, res)
@@ -785,13 +785,19 @@
         }
 
         if (text) {
-            const content = await pack([mediaRes, await getTextBlob({
+            const textBlob = await getTextBlob({
                 text,
                 href,
                 isLongText
-            })], data[href].title)
+            })
 
-            download(URL.createObjectURL(content), `${data[href].title}.zip`)
+            if (config.isPack.value) {
+                download(URL.createObjectURL(await pack([mediaRes, textBlob], data[href].title)), `${data[href].title}.zip`)
+            } else {
+                download(URL.createObjectURL(textBlob._blob), `${data[href].title}${textBlob._lastName}`)
+                download(URL.createObjectURL(mediaRes._blob), `${data[href].title}${mediaRes._lastName}`)
+            }
+
         } else {
             download(URL.createObjectURL(mediaRes._blob), `${data[href].title}${mediaRes._lastName}`)
         }
@@ -812,7 +818,7 @@
         const taskQueue = new TaskQueue(3);
         urlArr.forEach(item =>
             taskQueue.addTask(getFileBlob(urlData[item], item, {
-                callback: () => {
+                callback: (returnBlob) => {
                     data[href].completedQuantity++
                     const completedQuantity = data[href].completedQuantity
 
@@ -822,6 +828,10 @@
 
                     data[href].percentage = percentage
                     data[href].message = `中${completedQuantity}/${total}(${percentage}%)`
+
+                    if (!config.isPack.value && !isEmptyFile(returnBlob)) {
+                        download(URL.createObjectURL(returnBlob._blob), `${data[href].title}${returnBlob._lastName}`)
+                    }
                 }
             }))
         )
@@ -832,15 +842,23 @@
             return false
         }
 
+        taskQueueRes = taskQueueRes.filter(item => !isEmptyFile(item));
+
         if (text) {
-            taskQueueRes.push(await getTextBlob({
+            const textBlob = await getTextBlob({
                 text,
                 href,
                 isLongText
-            }))
+            })
+
+            if (!config.isPack.value) {
+                download(URL.createObjectURL(textBlob._blob), `${data[href].title}${textBlob._lastName}`)
+            }
+
+            taskQueueRes.push(textBlob)
         }
 
-        taskQueueRes = taskQueueRes.filter(item => !isEmptyFile(item));
+        if (!config.isPack.value) return true
 
         if (taskQueueRes.length === 0) {
             return null
@@ -1179,8 +1197,7 @@
     }
     updateMenuCommand()
 
-    GM_addStyle(`
-body{--red:#ff3852}.head-info_info_2AspQ:not(.Feed_retweetHeadInfo_Tl4Ld)::after,div.card-feed div.from::after{content:"下载" attr(show-text);color:var(--w-brand);cursor:pointer;float:right}.Main_full_1dfQX.isFirst .head-info_info_2AspQ:not(.Feed_retweetHeadInfo_Tl4Ld)::after,.main-full.isFirst div.card-feed div.from::after{animation:wobble infinite 1s alternate}@keyframes wobble{from{-webkit-transform:translate3d(0,0,0);transform:translate3d(0,0,0)}15%{-webkit-transform:translate3d(-25%,0,0) rotate3d(0,0,1,-5deg);transform:translate3d(-25%,0,0) rotate3d(0,0,1,-5deg)}30%{-webkit-transform:translate3d(20%,0,0) rotate3d(0,0,1,3deg);transform:translate3d(20%,0,0) rotate3d(0,0,1,3deg)}45%{-webkit-transform:translate3d(-15%,0,0) rotate3d(0,0,1,-3deg);transform:translate3d(-15%,0,0) rotate3d(0,0,1,-3deg)}60%{-webkit-transform:translate3d(10%,0,0) rotate3d(0,0,1,2deg);transform:translate3d(10%,0,0) rotate3d(0,0,1,2deg)}75%{-webkit-transform:translate3d(-5%,0,0) rotate3d(0,0,1,-1deg);transform:translate3d(-5%,0,0) rotate3d(0,0,1,-1deg)}to{-webkit-transform:translate3d(0,0,0);transform:translate3d(0,0,0)}}.Frame_content_3XrxZ #wah0713,.m-main #wah0713{font-size:12px;font-weight:700}.Frame_content_3XrxZ #wah0713.out,.m-main #wah0713.out{opacity:0}.Frame_content_3XrxZ #wah0713.out:hover,.m-main #wah0713.out:hover{opacity:1}.Frame_content_3XrxZ #wah0713 .container,.m-main #wah0713 .container{background-color:var(--frame-background);position:fixed;left:0;z-index:1}.Frame_content_3XrxZ #wah0713:hover .editName,.Frame_content_3XrxZ #wah0713:hover .input-box,.m-main #wah0713:hover .editName,.m-main #wah0713:hover .input-box{display:block}.Frame_content_3XrxZ #wah0713 input,.m-main #wah0713 input{width:3em;color:var(--w-brand);border-width:1px;outline:0;background-color:transparent}.Frame_content_3XrxZ #wah0713 .input-box,.m-main #wah0713 .input-box{display:none}.Frame_content_3XrxZ #wah0713 .showMessage>p,.m-main #wah0713 .showMessage>p{line-height:16px;margin:4px}.Frame_content_3XrxZ #wah0713 .showMessage>p span,.m-main #wah0713 .showMessage>p span{color:var(--w-main);vertical-align:top}.Frame_content_3XrxZ #wah0713 .showMessage>p span.red,.m-main #wah0713 .showMessage>p span.red{color:var(--w-brand)}.Frame_content_3XrxZ #wah0713 .showMessage>p span.red.downloadBtn,.m-main #wah0713 .showMessage>p span.red.downloadBtn{cursor:pointer}.Frame_content_3XrxZ #wah0713 .showMessage>p a,.m-main #wah0713 .showMessage>p a{color:transparent;overflow:hidden;text-overflow:ellipsis;max-width:300px;display:inline-block;white-space:nowrap;-webkit-background-clip:text}.Frame_content_3XrxZ #wah0713 .showMessage>p a:hover,.m-main #wah0713 .showMessage>p a:hover{text-decoration:none}.Frame_content_3XrxZ #wah0713 .editName,.m-main #wah0713 .editName{display:none;border:1px solid #ccc;padding:2px;border-radius:6px;user-select:none}.Frame_content_3XrxZ #wah0713 .editName ul,.m-main #wah0713 .editName ul{list-style:none;display:flex;height:20px;margin:0;padding:0 10px 0 0;background-color:#fafafa}.Frame_content_3XrxZ #wah0713 .editName li,.m-main #wah0713 .editName li{height:20px;line-height:20px;background:var(--red);color:#fff;padding-inline:3px;margin-left:2px;font-size:12px;cursor:grab;border-radius:5px}.Frame_content_3XrxZ #wah0713 .unactive li,.m-main #wah0713 .unactive li{background:var(--w-brand)}.Frame_content_3XrxZ #wah0713 .outline,.m-main #wah0713 .outline{outline:2px solid #119da6}
+    GM_addStyle(`body{--red:#ff3852}.head-info_info_2AspQ:not(.Feed_retweetHeadInfo_Tl4Ld)::after,div.card-feed div.from::after{content:"下载" attr(show-text);color:var(--w-brand);cursor:pointer;float:right}.Main_full_1dfQX.isFirst .head-info_info_2AspQ:not(.Feed_retweetHeadInfo_Tl4Ld)::after,.main-full.isFirst div.card-feed div.from::after{animation:wobble infinite 1s alternate}@keyframes wobble{from{-webkit-transform:translate3d(0,0,0);transform:translate3d(0,0,0)}15%{-webkit-transform:translate3d(-25%,0,0) rotate3d(0,0,1,-5deg);transform:translate3d(-25%,0,0) rotate3d(0,0,1,-5deg)}30%{-webkit-transform:translate3d(20%,0,0) rotate3d(0,0,1,3deg);transform:translate3d(20%,0,0) rotate3d(0,0,1,3deg)}45%{-webkit-transform:translate3d(-15%,0,0) rotate3d(0,0,1,-3deg);transform:translate3d(-15%,0,0) rotate3d(0,0,1,-3deg)}60%{-webkit-transform:translate3d(10%,0,0) rotate3d(0,0,1,2deg);transform:translate3d(10%,0,0) rotate3d(0,0,1,2deg)}75%{-webkit-transform:translate3d(-5%,0,0) rotate3d(0,0,1,-1deg);transform:translate3d(-5%,0,0) rotate3d(0,0,1,-1deg)}to{-webkit-transform:translate3d(0,0,0);transform:translate3d(0,0,0)}}.Frame_content_3XrxZ #wah0713,.m-main #wah0713{font-size:12px;font-weight:700}.Frame_content_3XrxZ #wah0713.out,.m-main #wah0713.out{opacity:0}.Frame_content_3XrxZ #wah0713.out:hover,.m-main #wah0713.out:hover{opacity:1}.Frame_content_3XrxZ #wah0713 .container,.m-main #wah0713 .container{background-color:var(--frame-background);position:fixed;left:0;z-index:1}.Frame_content_3XrxZ #wah0713:hover .editName,.Frame_content_3XrxZ #wah0713:hover .input-box,.m-main #wah0713:hover .editName,.m-main #wah0713:hover .input-box{display:block}.Frame_content_3XrxZ #wah0713 input,.m-main #wah0713 input{width:3em;color:var(--w-brand);border-width:1px;outline:0;background-color:transparent}.Frame_content_3XrxZ #wah0713 .input-box,.m-main #wah0713 .input-box{display:none}.Frame_content_3XrxZ #wah0713 .showMessage>p,.m-main #wah0713 .showMessage>p{line-height:16px;margin:4px}.Frame_content_3XrxZ #wah0713 .showMessage>p span,.m-main #wah0713 .showMessage>p span{color:var(--w-main);vertical-align:top}.Frame_content_3XrxZ #wah0713 .showMessage>p span.red,.m-main #wah0713 .showMessage>p span.red{color:var(--w-brand)}.Frame_content_3XrxZ #wah0713 .showMessage>p span.red.downloadBtn,.m-main #wah0713 .showMessage>p span.red.downloadBtn{cursor:pointer}.Frame_content_3XrxZ #wah0713 .showMessage>p a,.m-main #wah0713 .showMessage>p a{color:transparent;overflow:hidden;text-overflow:ellipsis;max-width:300px;display:inline-block;white-space:nowrap;-webkit-background-clip:text}.Frame_content_3XrxZ #wah0713 .showMessage>p a:hover,.m-main #wah0713 .showMessage>p a:hover{text-decoration:none}.Frame_content_3XrxZ #wah0713 .editName,.m-main #wah0713 .editName{display:none;border:1px solid #ccc;padding:2px;border-radius:6px;user-select:none}.Frame_content_3XrxZ #wah0713 .editName ul,.m-main #wah0713 .editName ul{list-style:none;display:flex;height:20px;margin:0;padding:0 10px 0 0;background-color:#fafafa}.Frame_content_3XrxZ #wah0713 .editName li,.m-main #wah0713 .editName li{height:20px;line-height:20px;background:var(--red);color:#fff;padding-inline:3px;margin-left:2px;font-size:12px;cursor:grab;border-radius:5px}.Frame_content_3XrxZ #wah0713 .unactive li,.m-main #wah0713 .unactive li{background:var(--w-brand)}.Frame_content_3XrxZ #wah0713 .outline,.m-main #wah0713 .outline{outline:2px solid #119da6}
 `)
 
     // // debugJS

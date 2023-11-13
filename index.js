@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         微博一键下载(9宫格&&视频)
 // @namespace    https://github.com/wah0713/getWeiboResources
-// @version      2.2.1
+// @version      2.3.0
 // @description  一个兴趣使然的脚本，微博一键下载脚本。傻瓜式🐵(简单🍎、易用🧩、可靠💪)
 // @supportURL   https://github.com/wah0713/getWeiboResources/issues
 // @updateURL    https://greasyfork.org/scripts/454816/code/download.user.js
@@ -101,33 +101,31 @@
     const config = {
         isSpecialHandlingName: {
             name: '替换下载名中【特殊符号】为下划线【_】',
-            id: null,
             value: GM_getValue('isSpecialHandlingName', false)
         },
         isSaveHistory: {
             name: '左侧消息是否保存',
-            id: null,
             value: GM_getValue('isSaveHistory', false)
         },
         isAutoHide: {
             name: '左侧消息自动消失',
-            id: null,
             value: GM_getValue('isAutoHide', false)
         },
         isShowActive: {
             name: '左侧消息过滤【已经完成】',
-            id: null,
             value: GM_getValue('isShowActive', false)
         },
         isIncludesText: {
             name: '下载文件中包含【微博文本】',
-            id: null,
             value: GM_getValue('isIncludesText', false)
         },
         isVideoHD: {
             name: '是否下载最高清的视频',
-            id: null,
             value: GM_getValue('isVideoHD', false)
+        },
+        isPack: {
+            name: '是否打包下载(压缩包)',
+            value: GM_getValue('isPack', true)
         }
     }
 
@@ -222,7 +220,7 @@
             notice.messagelist = notice.messagelist.filter(item => item.message !== '下载' + message.finish)
         }
 
-        notice.messagelist = notice.messagelist.filter(item => item.title !== title).slice(-(messagesNumber - 1))
+        notice.messagelist = notice.messagelist.filter(item => item.href !== name).slice(-(messagesNumber - 1))
         notice.messagelist.push({
             href: name,
             title,
@@ -502,7 +500,13 @@
                 },
                 onload: (res) => {
                     isDebug && console.log(`getFileBlob-onload`, res)
-                    options.callback && options.callback()
+
+                    const returnBlob = {
+                        ...res,
+                        _blob: res.response,
+                        _lastName
+                    }
+                    options.callback && options.callback(returnBlob)
 
                     // 下载失败，也会正常返回空文件
                     const {
@@ -513,11 +517,7 @@
                         resolve(null)
                     }
 
-                    resolve({
-                        ...res,
-                        _blob: res.response,
-                        _lastName
-                    })
+                    resolve(returnBlob)
                 },
                 onerror: (res) => {
                     console.error(`getFileBlob-onerror`, res)
@@ -785,13 +785,19 @@
         }
 
         if (text) {
-            const content = await pack([mediaRes, await getTextBlob({
+            const textBlob = await getTextBlob({
                 text,
                 href,
                 isLongText
-            })], data[href].title)
+            })
 
-            download(URL.createObjectURL(content), `${data[href].title}.zip`)
+            if (config.isPack.value) {
+                download(URL.createObjectURL(await pack([mediaRes, textBlob], data[href].title)), `${data[href].title}.zip`)
+            } else {
+                download(URL.createObjectURL(textBlob._blob), `${data[href].title}${textBlob._lastName}`)
+                download(URL.createObjectURL(mediaRes._blob), `${data[href].title}${mediaRes._lastName}`)
+            }
+
         } else {
             download(URL.createObjectURL(mediaRes._blob), `${data[href].title}${mediaRes._lastName}`)
         }
@@ -812,7 +818,7 @@
         const taskQueue = new TaskQueue(3);
         urlArr.forEach(item =>
             taskQueue.addTask(getFileBlob(urlData[item], item, {
-                callback: () => {
+                callback: (returnBlob) => {
                     data[href].completedQuantity++
                     const completedQuantity = data[href].completedQuantity
 
@@ -822,6 +828,10 @@
 
                     data[href].percentage = percentage
                     data[href].message = `中${completedQuantity}/${total}(${percentage}%)`
+
+                    if (!config.isPack.value && !isEmptyFile(returnBlob)) {
+                        download(URL.createObjectURL(returnBlob._blob), `${data[href].title}${returnBlob._lastName}`)
+                    }
                 }
             }))
         )
@@ -832,15 +842,23 @@
             return false
         }
 
+        taskQueueRes = taskQueueRes.filter(item => !isEmptyFile(item));
+
         if (text) {
-            taskQueueRes.push(await getTextBlob({
+            const textBlob = await getTextBlob({
                 text,
                 href,
                 isLongText
-            }))
+            })
+
+            if (!config.isPack.value) {
+                download(URL.createObjectURL(textBlob._blob), `${data[href].title}${textBlob._lastName}`)
+            }
+
+            taskQueueRes.push(textBlob)
         }
 
-        taskQueueRes = taskQueueRes.filter(item => !isEmptyFile(item));
+        if (!config.isPack.value) return true
 
         if (taskQueueRes.length === 0) {
             return null
