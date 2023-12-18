@@ -9,7 +9,7 @@
 </p>
 <details>
 <summary>2.3.0(点击查看)</summary>
-<img loading="lazy" src="https://z1.ax1x.com/2023/11/13/piJ1Ane.png">
+<img loading="lazy" src="https://s11.ax1x.com/2023/11/13/piJ1Ane.png">
 </details>
 <!-- end -->
 <p>
@@ -18,21 +18,21 @@
 </p>
 <details>
 <summary>2.2.0(点击查看)</summary>
-<img loading="lazy" src="https://z1.ax1x.com/2023/09/05/pPslAKK.png">
+<img loading="lazy" src="https://s11.ax1x.com/2023/09/05/pPslAKK.png">
 </details>
 <p>
 17、左侧消息是否保存（2.1.0）
 </p>
 <details>
 <summary>2.1.0(点击查看)</summary>
-<img loading="lazy" src="https://z1.ax1x.com/2023/07/22/pCqZGxs.png">
+<img loading="lazy" src="https://s11.ax1x.com/2023/07/22/pCqZGxs.png">
 </details>
 <p>
 16、支持选择下载名称组合（2.0.0）
 </p>
 <details>
 <summary>2.0.0(点击查看)</summary>
-<img loading="lazy" src="https://z1.ax1x.com/2023/06/08/pCAetiR.png">
+<img loading="lazy" src="https://s11.ax1x.com/2023/06/08/pCAetiR.png">
 </details>
 <p>
 15、支持下载m3u8类型视频（如<img loading="lazy" width="14" style="vertical-align: text-top; "
@@ -40,7 +40,7 @@ src="https://api.iowen.cn/favicon/www.iqiyi.com.png">爱奇艺视频）（1.9.0�
 </p>
 <details>
 <summary>1.9.0(点击查看)</summary>
-<img loading="lazy" src="https://z1.ax1x.com/2023/05/25/p9bVU0I.png">
+<img loading="lazy" src="https://s11.ax1x.com/2023/05/25/p9bVU0I.png">
 </details>
 <p>
 14、支持下载名中显示微博文本(前20字)（1.8.0）
@@ -48,7 +48,7 @@ src="https://api.iowen.cn/favicon/www.iqiyi.com.png">爱奇艺视频）（1.9.0�
 </p>
 <details>
 <summary>1.8.0(点击查看)</summary>
-<img loading="lazy" src="https://z1.ax1x.com/2023/04/15/p9SXVEj.png">
+<img loading="lazy" src="https://s11.ax1x.com/2023/04/15/p9SXVEj.png">
 </details>
 <p>
 12、支持下载视频（1.7.0）
@@ -56,7 +56,7 @@ src="https://api.iowen.cn/favicon/www.iqiyi.com.png">爱奇艺视频）（1.9.0�
 </p>
 <details>
 <summary>1.7.0(点击查看)</summary>
-<img loading="lazy" src="https://z1.ax1x.com/2023/03/11/ppu7Fx0.png">
+<img loading="lazy" src="https://s11.ax1x.com/2023/03/11/ppu7Fx0.png">
 </details>
 <p>
 10、右边【记录下载状态】支持再次下载（1.6.0）
@@ -64,14 +64,14 @@ src="https://api.iowen.cn/favicon/www.iqiyi.com.png">爱奇艺视频）（1.9.0�
 </p>
 <details>
 <summary>1.6.0(点击查看)</summary>
-<img loading="lazy" src="https://z1.ax1x.com/2023/03/11/ppu7PGn.png">
+<img loading="lazy" src="https://s11.ax1x.com/2023/03/11/ppu7PGn.png">
 </details>
 <p>
 8、记录下载状态（1.5.0）
 </p>
 <details>
 <summary>1.5.0(点击查看)</summary>
-<img loading="lazy" src="https://z1.ax1x.com/2023/06/11/pCVg5xH.png">
+<img loading="lazy" src="https://s11.ax1x.com/2023/06/11/pCVg5xH.png">
 </details>
 <p>
 7、兼容<img loading="lazy" width="14" style="vertical-align: text-top; "src="https://www.firefox.com.cn/media/img/favicons/firefox/browser/apple-touch-icon.79c2abeb4e35.png">火狐浏览器（1.4.0）
@@ -83,13 +83,13 @@ src="https://api.iowen.cn/favicon/www.iqiyi.com.png">爱奇艺视频）（1.9.0�
 </p>
 <details>
 <summary>1.3.0(点击查看)</summary>
-<img loading="lazy" src="https://z1.ax1x.com/2023/06/11/pCV2ny9.png">
+<img loading="lazy" src="https://s11.ax1x.com/2023/06/11/pCV2ny9.png">
 </details>
 <p>4、支持下载live图（1.2.0）</p>
 <details>
 <summary>1.2.0(点击查看)</summary>
-<img loading="lazy" src="https://z1.ax1x.com/2023/06/11/pCV23FK.png">
-<img loading="lazy" src="https://z1.ax1x.com/2023/06/11/pCV2Nyd.png">
+<img loading="lazy" src="https://s11.ax1x.com/2023/06/11/pCV23FK.png">
+<img loading="lazy" src="https://s11.ax1x.com/2023/06/11/pCV2Nyd.png">
 </details>
 <p>
 3、<del>不支持下载视频（1.1.0）</del><a href="https://greasyfork.org/zh-CN/scripts/454816-%E5%BE%AE%E5%8D%9A%E4%B8%80%E9%94%AE%E5%8F%96%E5%9B%BE-9%E5%AE%AB%E6%A0%BC/discussions/160492">万能下载视频的方法👈</a>
@@ -98,8 +98,8 @@ src="https://api.iowen.cn/favicon/www.iqiyi.com.png">爱奇艺视频）（1.9.0�
 </p>
 <details>
 <summary>1.1.0(点击查看)</summary>
-<img loading="lazy" src="https://z1.ax1x.com/2023/06/11/pCV2wwt.png">
-<img loading="lazy" src="https://z1.ax1x.com/2023/06/11/pCV2deI.png">
+<img loading="lazy" src="https://s11.ax1x.com/2023/06/11/pCV2wwt.png">
+<img loading="lazy" src="https://s11.ax1x.com/2023/06/11/pCV2deI.png">
 </details>
 </pre>
 </details>
@@ -129,5 +129,5 @@ src="https://api.iowen.cn/favicon/www.iqiyi.com.png">爱奇艺视频）（1.9.0�
 使用起来感觉还不错，想支持我的。可以给脚本点个赞<del>满足我那个该死的虚荣心</del><br>
 
 <!-- weibo/wb -->
-[2.3.0]:https://z1.ax1x.com/2023/11/13/piJ1Ane.png
-[2.2.0]:https://z1.ax1x.com/2023/09/05/pPslAKK.png
+[2.3.0]:https://s11.ax1x.com/2023/11/13/piJ1Ane.png
+[2.2.0]:https://s11.ax1x.com/2023/09/05/pPslAKK.png
