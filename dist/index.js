@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         微博一键下载(9宫格&&视频)
 // @namespace    https://github.com/wah0713/getWeiboResources
-// @version      2.3.0
+// @version      2.3.1
 // @description  一个兴趣使然的脚本，微博一键下载脚本。傻瓜式🐵(简单🍎、易用🧩、可靠💪)
 // @supportURL   https://github.com/wah0713/getWeiboResources/issues
 // @updateURL    https://greasyfork.org/scripts/454816/code/download.user.js
@@ -120,8 +120,12 @@
             value: GM_getValue('isIncludesText', false)
         },
         isVideoHD: {
-            name: '是否下载最高清的视频',
+            name: '是否下载最高清的【视频】',
             value: GM_getValue('isVideoHD', false)
+        },
+        isImageHD: {
+            name: '是否下载最高清的【图片】（会明显增加下载耗时）',
+            value: GM_getValue('isImageHD', false)
         },
         isPack: {
             name: '是否打包下载(压缩包)',
@@ -315,8 +319,8 @@
                 // 高清图源
                 const mw2000Url = get(pic_infos[ele], 'mw2000.url', '')
 
-                // 粉丝专属
-                if (mblog_vip_type === 1) {
+                // 粉丝专属||普通画质图片
+                if (mblog_vip_type === 1 || !config.isImageHD.value) {
                     url = mw2000Url
                 }
 
@@ -350,7 +354,13 @@
                     imgUrl = get(ele, 'data.mw2000.url', '')
                 }
 
-                urlData[`${afterName}.${getSuffixName(imgUrl)}`] = `https://weibo.com/ajax/common/download?pid=${imgUrl.match(/([\w]+)(?=\.\w+$)/)&& RegExp.$1}`
+                if (!config.isImageHD.value) {
+                    // 普通图片
+                    urlData[`${afterName}.${getSuffixName(imgUrl)}`] = imgUrl
+                } else {
+                    // 高清图片
+                    urlData[`${afterName}.${getSuffixName(imgUrl)}`] = `https://weibo.com/ajax/common/download?pid=${imgUrl.match(/([\w]+)(?=\.\w+$)/)&& RegExp.$1}`
+                }
 
                 if (mediaUrl) {
                     urlData[`${afterName}.${getSuffixName(mediaUrl)}`] = mediaUrl
@@ -488,7 +498,7 @@
     }
 
     // 下载流
-    function getFileBlob(url, _lastName, options) {
+    function getFileBlob(url, _lastName, options, limt = 3) {
         return new Promise((resolve, reject) => {
             GM_xmlhttpRequest({
                 url,
@@ -519,9 +529,9 @@
 
                     resolve(returnBlob)
                 },
-                onerror: (res) => {
+                onerror: async (res) => {
                     console.error(`getFileBlob-onerror`, res)
-                    resolve(null)
+                    resolve(await getFileBlob(url, _lastName, options, --limt))
                 },
                 onprogress: (res) => {
                     options.onprogress && options.onprogress(res)
@@ -684,7 +694,7 @@
                         index
                     } = this.taskList.shift();
 
-                    task.then((res) => {
+                    task().then((res) => {
                         if (res === null) {
                             // 任意一个失败
                             this.isError = true
@@ -757,7 +767,7 @@
 
             const taskQueue = new TaskQueue();
             urlArr.forEach(item =>
-                taskQueue.addTask(getFileBlob(item, '', {
+                taskQueue.addTask(getFileBlob.bind(null, item, '', {
                     callback: () => {
                         data[href].completedQuantity++
                         const completedQuantity = data[href].completedQuantity
@@ -817,7 +827,7 @@
 
         const taskQueue = new TaskQueue(3);
         urlArr.forEach(item =>
-            taskQueue.addTask(getFileBlob(urlData[item], item, {
+            taskQueue.addTask(getFileBlob.bind(null, urlData[item], item, {
                 callback: (returnBlob) => {
                     data[href].completedQuantity++
                     const completedQuantity = data[href].completedQuantity
