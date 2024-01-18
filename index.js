@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         微博一键下载(9宫格&&视频)
 // @namespace    https://github.com/wah0713/getWeiboResources
-// @version      2.3.2
+// @version      2.3.3
 // @description  一个兴趣使然的脚本，微博一键下载脚本。傻瓜式🐵(简单🍎、易用🧩、可靠💪)
 // @supportURL   https://github.com/wah0713/getWeiboResources/issues
 // @updateURL    https://greasyfork.org/scripts/454816/code/download.user.js
@@ -640,6 +640,11 @@
         })
     }
 
+    // 等待
+    function sleep(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms))
+    }
+
     // 通过id获取长文
     function getLongtextById(id) {
         return new Promise((resolve, reject) => {
@@ -662,8 +667,12 @@
     // 作者： 沐秋Alron
     // 链接： https://juejin.cn/post/7099344493010223134
     class TaskQueue {
-        constructor(num = 10) {
-            this.originMax = num; // 原始最大并发数
+        constructor(options = {
+            num: 10,
+            sleepTime: 0
+        }) {
+            this.originMax = options.num || 10; // 原始最大并发数
+            this.sleepTime = options.sleepTime || 0; // 等待时间
             this.max = this.originMax; // 最大并发数
             this.index = 0 // 下标
             this.taskList = [] // 用shift方法实现先进先出
@@ -683,7 +692,7 @@
         }
 
         run() {
-            return new Promise((resolve, reject) => {
+            return new Promise(async (resolve, reject) => {
                 const length = this.taskList.length;
                 if (!length) {
                     return false;
@@ -697,6 +706,11 @@
                         task,
                         index
                     } = this.taskList.shift();
+
+                    // 第一个不需要等待
+                    if (index !== 0) {
+                        await sleep(this.sleepTime)
+                    }
 
                     task().then((res) => {
                         if (res === null) {
@@ -829,7 +843,17 @@
         const total = urlArr.length
         data[href].total = total
 
-        const taskQueue = new TaskQueue(3);
+        let sleepTime = 0
+        // 错开开始时间，减少接口调用失败率
+        if (config.isImageHD.value) {
+            sleepTime = 500 + Math.random() * 500
+        }
+
+        const taskQueue = new TaskQueue({
+            num: 3,
+            sleepTime
+        });
+
         urlArr.forEach(item =>
             taskQueue.addTask(getFileBlob.bind(null, urlData[item], item, {
                 callback: (returnBlob) => {
