@@ -678,6 +678,7 @@
             this.taskList = [] // 用shift方法实现先进先出
             this.resList = [] // 最后返回队列数组
             this.isError = false // 任务失败
+            this.maxLength // 总任务数量
         }
 
         addTask(task) {
@@ -691,10 +692,25 @@
             return await this.run()
         }
 
+        async end() {
+            if (this.isError) return false
+
+            if (this.maxLength === this.resList.filter(Boolean).length) {
+                // 任务完成
+                return this.resList
+            }
+
+            await sleep(200)
+            // 自动进行下一个任务
+            return await this.run()
+        }
+
         run() {
             return new Promise(async (resolve, reject) => {
-                const length = this.taskList.length;
+
+                let length = this.taskList.length;
                 if (!length) {
+                    resolve(await this.end())
                     return false;
                 }
                 // 控制并发数量
@@ -702,6 +718,13 @@
                 for (let i = 0; i < min; i++) {
                     // 开始占用一个任务的空间
                     this.max--;
+
+                    length = this.taskList.length;
+                    if (!length) {
+                        resolve(await this.end())
+                        return false;
+                    }
+
                     const {
                         task,
                         index
@@ -710,6 +733,8 @@
                     // 第一个不需要等待
                     if (index !== 0) {
                         await sleep(this.sleepTime)
+                    } else {
+                        this.maxLength = length
                     }
 
                     task().then((res) => {
@@ -717,20 +742,14 @@
                             // 任意一个失败
                             this.isError = true
                             resolve(false)
+                            return false
                         }
                         this.resList[index] = res
                     }).finally(async () => {
                         // 任务完成，释放空间
                         this.max++;
 
-                        if (this.isError) return false
-
-                        if (this.max === this.originMax) {
-                            // 任务完成
-                            resolve(this.resList)
-                        }
-                        // 自动进行下一个任务
-                        resolve(await this.run())
+                        resolve(await this.end())
                     })
                 }
             })
