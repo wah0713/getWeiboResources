@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         微博一键下载(9宫格&&视频)
 // @namespace    https://github.com/wah0713/getWeiboResources
-// @version      2.3.4
+// @version      2.3.5
 // @description  一个兴趣使然的脚本，微博一键下载脚本。傻瓜式🐵(简单🍎、易用🧩、可靠💪)
 // @supportURL   https://github.com/wah0713/getWeiboResources/issues
 // @updateURL    https://greasyfork.org/scripts/454816/code/download.user.js
@@ -320,7 +320,7 @@
                 const mw2000Url = get(pic_infos[ele], 'mw2000.url', '')
 
                 // 粉丝专属||普通画质图片
-                if (mblog_vip_type === 1 || !config.isImageHD.value) {
+                if (mblog_vip_type === 1 || !config.isImageHD.value || getSuffixName(mw2000Url) === 'gif') {
                     url = mw2000Url
                 }
 
@@ -354,7 +354,7 @@
                     imgUrl = get(ele, 'data.mw2000.url', '')
                 }
 
-                if (!config.isImageHD.value) {
+                if (!config.isImageHD.value || getSuffixName(imgUrl) === 'gif') {
                     // 普通图片
                     urlData[`${afterName}.${getSuffixName(imgUrl)}`] = imgUrl
                 } else {
@@ -500,6 +500,7 @@
     // 下载流
     function getFileBlob(url, _lastName, options, limt = 3) {
         return new Promise((resolve, reject) => {
+            console.log(`url`, url)
             GM_xmlhttpRequest({
                 url,
                 method: 'get',
@@ -702,39 +703,32 @@
 
             await sleep(200)
             // 自动进行下一个任务
-            return await this.run()
+            return await this.run(1)
         }
 
-        run() {
+        run(taskNum = this.max) {
             return new Promise(async (resolve, reject) => {
-
-                let length = this.taskList.length;
+                const length = this.taskList.length;
                 if (!length) {
                     resolve(await this.end())
                     return false;
                 }
                 // 控制并发数量
-                const min = Math.min(length, this.max);
+                const min = Math.min(length, taskNum);
                 for (let i = 0; i < min; i++) {
                     // 开始占用一个任务的空间
                     this.max--;
-
-                    length = this.taskList.length;
-                    if (!length) {
-                        resolve(await this.end())
-                        return false;
-                    }
 
                     const {
                         task,
                         index
                     } = this.taskList.shift();
 
-                    // 第一个不需要等待
-                    if (index !== 0) {
-                        await sleep(this.sleepTime)
-                    } else {
+                    if (index === 0) {
                         this.maxLength = length
+                    } else if (taskNum !== 1) {
+                        // 第一个不需要等待
+                        await sleep(this.sleepTime)
                     }
 
                     task().then((res) => {
@@ -865,7 +859,7 @@
         let sleepTime = 0
         // 错开开始时间，减少接口调用失败率
         if (config.isImageHD.value) {
-            sleepTime = 500 + Math.random() * 500
+            sleepTime = 800 + Math.random() * 500
         }
 
         const taskQueue = new TaskQueue({
@@ -1258,7 +1252,7 @@
 body{--red:#ff3852}.head-info_info_2AspQ:not(.Feed_retweetHeadInfo_Tl4Ld)::after,div.card-feed div.from::after{content:"下载" attr(show-text);color:var(--w-brand);cursor:pointer;float:right}.Main_full_1dfQX.isFirst .head-info_info_2AspQ:not(.Feed_retweetHeadInfo_Tl4Ld)::after,.main-full.isFirst div.card-feed div.from::after{animation:wobble infinite 1s alternate}@keyframes wobble{from{-webkit-transform:translate3d(0,0,0);transform:translate3d(0,0,0)}15%{-webkit-transform:translate3d(-25%,0,0) rotate3d(0,0,1,-5deg);transform:translate3d(-25%,0,0) rotate3d(0,0,1,-5deg)}30%{-webkit-transform:translate3d(20%,0,0) rotate3d(0,0,1,3deg);transform:translate3d(20%,0,0) rotate3d(0,0,1,3deg)}45%{-webkit-transform:translate3d(-15%,0,0) rotate3d(0,0,1,-3deg);transform:translate3d(-15%,0,0) rotate3d(0,0,1,-3deg)}60%{-webkit-transform:translate3d(10%,0,0) rotate3d(0,0,1,2deg);transform:translate3d(10%,0,0) rotate3d(0,0,1,2deg)}75%{-webkit-transform:translate3d(-5%,0,0) rotate3d(0,0,1,-1deg);transform:translate3d(-5%,0,0) rotate3d(0,0,1,-1deg)}to{-webkit-transform:translate3d(0,0,0);transform:translate3d(0,0,0)}}.Frame_content_3XrxZ #wah0713,.m-main #wah0713{font-size:12px;font-weight:700}.Frame_content_3XrxZ #wah0713.out,.m-main #wah0713.out{opacity:0}.Frame_content_3XrxZ #wah0713.out:hover,.m-main #wah0713.out:hover{opacity:1}.Frame_content_3XrxZ #wah0713 .container,.m-main #wah0713 .container{background-color:var(--frame-background);position:fixed;left:0;z-index:1}.Frame_content_3XrxZ #wah0713:hover .editName,.Frame_content_3XrxZ #wah0713:hover .input-box,.m-main #wah0713:hover .editName,.m-main #wah0713:hover .input-box{display:block}.Frame_content_3XrxZ #wah0713 input,.m-main #wah0713 input{width:3em;color:var(--w-brand);border-width:1px;outline:0;background-color:transparent}.Frame_content_3XrxZ #wah0713 .input-box,.m-main #wah0713 .input-box{display:none}.Frame_content_3XrxZ #wah0713 .showMessage>p,.m-main #wah0713 .showMessage>p{line-height:16px;margin:4px}.Frame_content_3XrxZ #wah0713 .showMessage>p span,.m-main #wah0713 .showMessage>p span{color:var(--w-main);vertical-align:top}.Frame_content_3XrxZ #wah0713 .showMessage>p span.red,.m-main #wah0713 .showMessage>p span.red{color:var(--w-brand)}.Frame_content_3XrxZ #wah0713 .showMessage>p span.red.downloadBtn,.m-main #wah0713 .showMessage>p span.red.downloadBtn{cursor:pointer}.Frame_content_3XrxZ #wah0713 .showMessage>p a,.m-main #wah0713 .showMessage>p a{color:transparent;overflow:hidden;text-overflow:ellipsis;max-width:300px;display:inline-block;white-space:nowrap;-webkit-background-clip:text}.Frame_content_3XrxZ #wah0713 .showMessage>p a:hover,.m-main #wah0713 .showMessage>p a:hover{text-decoration:none}.Frame_content_3XrxZ #wah0713 .editName,.m-main #wah0713 .editName{display:none;border:1px solid #ccc;padding:2px;border-radius:6px;user-select:none}.Frame_content_3XrxZ #wah0713 .editName ul,.m-main #wah0713 .editName ul{list-style:none;display:flex;height:20px;margin:0;padding:0 10px 0 0;background-color:#fafafa}.Frame_content_3XrxZ #wah0713 .editName li,.m-main #wah0713 .editName li{height:20px;line-height:20px;background:var(--red);color:#fff;padding-inline:3px;margin-left:2px;font-size:12px;cursor:grab;border-radius:5px}.Frame_content_3XrxZ #wah0713 .unactive li,.m-main #wah0713 .unactive li{background:var(--w-brand)}.Frame_content_3XrxZ #wah0713 .outline,.m-main #wah0713 .outline{outline:2px solid #119da6}
 `)
 
-    // // debugJS
-    // isDebug = true
-    // unsafeWindow.$ = $
+    // debugJS
+    isDebug = true
+    unsafeWindow.$ = $
 })()

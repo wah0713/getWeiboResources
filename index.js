@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         微博一键下载(9宫格&&视频)
 // @namespace    https://github.com/wah0713/getWeiboResources
-// @version      2.3.4
+// @version      2.3.5
 // @description  一个兴趣使然的脚本，微博一键下载脚本。傻瓜式🐵(简单🍎、易用🧩、可靠💪)
 // @supportURL   https://github.com/wah0713/getWeiboResources/issues
 // @updateURL    https://greasyfork.org/scripts/454816/code/download.user.js
@@ -320,7 +320,7 @@
                 const mw2000Url = get(pic_infos[ele], 'mw2000.url', '')
 
                 // 粉丝专属||普通画质图片
-                if (mblog_vip_type === 1 || !config.isImageHD.value) {
+                if (mblog_vip_type === 1 || !config.isImageHD.value || getSuffixName(mw2000Url) === 'gif') {
                     url = mw2000Url
                 }
 
@@ -354,7 +354,7 @@
                     imgUrl = get(ele, 'data.mw2000.url', '')
                 }
 
-                if (!config.isImageHD.value) {
+                if (!config.isImageHD.value || getSuffixName(imgUrl) === 'gif') {
                     // 普通图片
                     urlData[`${afterName}.${getSuffixName(imgUrl)}`] = imgUrl
                 } else {
@@ -702,39 +702,32 @@
 
             await sleep(200)
             // 自动进行下一个任务
-            return await this.run()
+            return await this.run(1)
         }
 
-        run() {
+        run(taskNum = this.max) {
             return new Promise(async (resolve, reject) => {
-
-                let length = this.taskList.length;
+                const length = this.taskList.length;
                 if (!length) {
                     resolve(await this.end())
                     return false;
                 }
                 // 控制并发数量
-                const min = Math.min(length, this.max);
+                const min = Math.min(length, taskNum);
                 for (let i = 0; i < min; i++) {
                     // 开始占用一个任务的空间
                     this.max--;
-
-                    length = this.taskList.length;
-                    if (!length) {
-                        resolve(await this.end())
-                        return false;
-                    }
 
                     const {
                         task,
                         index
                     } = this.taskList.shift();
 
-                    // 第一个不需要等待
-                    if (index !== 0) {
-                        await sleep(this.sleepTime)
-                    } else {
+                    if (index === 0) {
                         this.maxLength = length
+                    } else if (taskNum !== 1) {
+                        // 第一个不需要等待
+                        await sleep(this.sleepTime)
                     }
 
                     task().then((res) => {
@@ -865,7 +858,7 @@
         let sleepTime = 0
         // 错开开始时间，减少接口调用失败率
         if (config.isImageHD.value) {
-            sleepTime = 500 + Math.random() * 500
+            sleepTime = 800 + Math.random() * 500
         }
 
         const taskQueue = new TaskQueue({
