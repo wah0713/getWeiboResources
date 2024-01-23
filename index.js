@@ -724,9 +724,10 @@
                     } = this.taskList.shift();
 
                     if (index === 0) {
+                        // 保存最大任务数
                         this.maxLength = length
                     } else if (taskNum !== 1) {
-                        // 第一个不需要等待
+                        // 第一个和任务数为1不需要等待
                         await sleep(this.sleepTime)
                     }
 
