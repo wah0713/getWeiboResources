@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         微博一键下载(9宫格&&视频)
 // @namespace    https://github.com/wah0713/getWeiboResources
-// @version      2.3.5
+// @version      2.3.6
 // @description  一个兴趣使然的脚本，微博一键下载脚本。傻瓜式🐵(简单🍎、易用🧩、可靠💪)
 // @supportURL   https://github.com/wah0713/getWeiboResources/issues
 // @updateURL    https://greasyfork.org/scripts/454816/code/download.user.js
@@ -560,6 +560,8 @@
                         if (res.response.retweeted_status) {
                             response.pic_infos = res.response.retweeted_status.pic_infos
                             response.mix_media_info = res.response.retweeted_status.mix_media_info
+                            // 粉丝专属
+                            response.mblog_vip_type = res.response.retweeted_status.mblog_vip_type
                         }
 
                         // 视频
