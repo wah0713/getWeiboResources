@@ -124,7 +124,7 @@
             value: GM_getValue('isVideoHD', false)
         },
         isImageHD: {
-            name: '是否下载最高清的【图片】（会明显增加下载耗时）',
+            name: '是否下载最高清的【图片】(会明显增加下载耗时)',
             value: GM_getValue('isImageHD', false)
         },
         isPack: {
@@ -674,7 +674,13 @@
             sleepTime: 0
         }) {
             this.originMax = options.num || 10; // 原始最大并发数
-            this.sleepTime = options.sleepTime || 0; // 等待时间
+            this.sleepTime = () => {
+                // 等待时间
+                if (options.sleepTime) {
+                    return options.sleepTime()
+                }
+                return 0
+            }; // 等待时间
             this.max = this.originMax; // 最大并发数
             this.index = 0 // 下标
             this.taskList = [] // 用shift方法实现先进先出
@@ -730,7 +736,7 @@
                         this.maxLength = length
                     } else if (taskNum !== 1) {
                         // 第一个和任务数为1不需要等待
-                        await sleep(this.sleepTime)
+                        await sleep(this.sleepTime())
                     }
 
                     task().then((res) => {
@@ -858,10 +864,13 @@
         const total = urlArr.length
         data[href].total = total
 
-        let sleepTime = 0
+        let sleepTime = null
         // 错开开始时间，减少接口调用失败率
         if (config.isImageHD.value) {
-            sleepTime = 800 + Math.random() * 500
+            sleepTime = () => (
+                800 + Math.random() * 500
+            )
+
         }
 
         const taskQueue = new TaskQueue({
