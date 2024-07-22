@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         微博一键下载(9宫格&&视频)
 // @namespace    https://github.com/wah0713/getWeiboResources
-// @version      2.3.6
+// @version      2.3.7
 // @description  一个兴趣使然的脚本，微博一键下载脚本。傻瓜式🐵(简单🍎、易用🧩、可靠💪)
 // @supportURL   https://github.com/wah0713/getWeiboResources/issues
 // @updateURL    https://greasyfork.org/scripts/454816/code/download.user.js
@@ -9,9 +9,9 @@
 // @compatible   chrome
 // @license      MIT
 // @icon         https://weibo.com/favicon.ico
-// @require      https://cdn.bootcss.com/jquery/1.12.4/jquery.min.js
-// @require      https://cdn.bootcss.com/jszip/3.1.5/jszip.min.js
-// @require      https://cdn.bootcdn.net/ajax/libs/m3u8-parser/6.0.0/m3u8-parser.min.js
+// @require      https://code.jquery.com/jquery-1.12.4.min.js
+// @require      https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.5/jszip.min.js
+// @require      https://cdnjs.cloudflare.com/ajax/libs/m3u8-parser/6.0.0/m3u8-parser.min.js
 // @match        *://weibo.com/*
 // @match        *://*.weibo.com/*
 // @match        *://t.cn/*
@@ -326,6 +326,7 @@
 
                 urlData[`${afterName}.${getSuffixName(mw2000Url)}`] = url
 
+                // live视频
                 if (pic_infos[ele].type === 'livephoto') {
                     const url = get(pic_infos[ele], 'video', '')
                     urlData[`${afterName}.${getSuffixName(url)}`] = url
@@ -352,6 +353,11 @@
                     mediaUrl = videoHDUrl || get(ele, 'data.media_info.stream_url_hd', get(ele, 'data.media_info.stream_url', ''))
                 } else {
                     imgUrl = get(ele, 'data.mw2000.url', '')
+                    // live视频
+                    if (get(ele, 'data.type', '') === 'livephoto') {
+                        const url = get(ele, 'data.video', '')
+                        urlData[`${afterName}.${getSuffixName(url)}`] = url
+                    }
                 }
 
                 if (!config.isImageHD.value || getSuffixName(imgUrl) === 'gif') {
