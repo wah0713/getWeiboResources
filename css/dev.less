@@ -5,10 +5,16 @@ body {
 div.card-feed div.from,
 .head-info_info_2AspQ:not(.Feed_retweetHeadInfo_Tl4Ld) {
     &::after {
-        content: "下载"attr(show-text);
+        content: "下载" attr(show-text);
         color: var(--w-brand);
         cursor: pointer;
         float: right;
+    }
+}
+
+.woo-modal-main .wbpro-layer .head-info_info_2AspQ:not(.Feed_retweetHeadInfo_Tl4Ld) {
+    &::after {
+        content: '';
     }
 }
 

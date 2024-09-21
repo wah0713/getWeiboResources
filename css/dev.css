@@ -8,6 +8,9 @@ div.card-feed div.from::after,
   cursor: pointer;
   float: right;
 }
+.woo-modal-main .wbpro-layer .head-info_info_2AspQ:not(.Feed_retweetHeadInfo_Tl4Ld)::after {
+  content: '';
+}
 .Main_full_1dfQX.isFirst .head-info_info_2AspQ:not(.Feed_retweetHeadInfo_Tl4Ld)::after,
 .main-full.isFirst div.card-feed div.from::after {
   animation: wobble infinite 1s alternate;
